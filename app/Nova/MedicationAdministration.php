@@ -38,7 +38,9 @@ class MedicationAdministration extends Resource
     {
         return [
             ID::make()->sortable()->onlyOnDetail(),
-            BelongsTo::make('Admission')->hideFromIndex(),
+            BelongsTo::make('Admission')->searchable()->relatableQueryUsing(function (NovaRequest $request, $query) {
+                $query->where('status', 'admitted');
+            })->rules('required'),
             BelongsTo::make('Medication')->searchable()->rules('required'),
             Text::make('Dosage')->rules('required', 'max:100')->help('e.g. 500mg, 10ml, 2 tablets'),
             Select::make('Route')->options(collect(AdministrationRoute::cases())->mapWithKeys(fn ($r) => [$r->value => strtoupper($r->value)]))->rules('required')->searchable()->displayUsingLabels(),
