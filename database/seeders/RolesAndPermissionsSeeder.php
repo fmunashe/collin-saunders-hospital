@@ -35,6 +35,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'permission',
             'action-event',
             'stock-movement',
+            'medication-administration',
         ];
 
         $actions = ['access', 'show', 'create', 'update', 'delete', 'restore'];
@@ -87,6 +88,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'bed-access', 'bed-show', 'bed-update',
             'department-access', 'department-show',
             'staff-access', 'staff-show',
+            'medication-administration-access', 'medication-administration-show', 'medication-administration-create', 'medication-administration-update',
         ]);
 
         // Pharmacist permissions
