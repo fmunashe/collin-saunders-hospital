@@ -34,7 +34,7 @@ class Admission extends Resource
 
     public static function searchableColumns(): array
     {
-        return ['id', 'reason_for_admission', 'patient.first_name', 'patient.last_name'];
+        return ['id', 'reason_for_admission', 'patient.patient_number', 'patient.first_name', 'patient.last_name'];
     }
 
     public function fields(NovaRequest $request): array
