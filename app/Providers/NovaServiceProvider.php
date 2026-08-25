@@ -65,7 +65,7 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
 
             if ($user && $user->roles->isEmpty()) {
                 return [
-                    MenuSection::dashboard(\App\Nova\Dashboards\NoAccess::class)->icon('home'),
+                    MenuSection::dashboard(Main::class)->icon('home'),
                 ];
             }
 
@@ -147,10 +147,8 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
      */
     protected function gate(): void
     {
-        Gate::define('viewNova', function (User $user) {
-            return in_array($user->email, [
-                //
-            ]);
+        Gate::define('viewNova', function ($user) {
+            return true;
         });
     }
 
@@ -161,14 +159,6 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
      */
     protected function dashboards(): array
     {
-        $user = auth()->user();
-
-        if ($user && $user->roles->isEmpty()) {
-            return [
-                new \App\Nova\Dashboards\NoAccess,
-            ];
-        }
-
         return [
             new \App\Nova\Dashboards\Main,
         ];

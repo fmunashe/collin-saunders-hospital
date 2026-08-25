@@ -8,6 +8,7 @@ use App\Nova\Metrics\CurrentAdmissions;
 use App\Nova\Metrics\InvoicesByStatus;
 use App\Nova\Metrics\LowStockMedications;
 use App\Nova\Metrics\NewPatientsPerDay;
+use App\Nova\Metrics\NoAccessMessage;
 use App\Nova\Metrics\PatientsByBilling;
 use App\Nova\Metrics\PatientsByType;
 use App\Nova\Metrics\PrescriptionsByStatus;
@@ -24,6 +25,14 @@ class Main extends Dashboard
 {
     public function cards(): array
     {
+        $user = auth()->user();
+
+        if ($user && $user->roles->isEmpty()) {
+            return [
+                (new NoAccessMessage)->width('full'),
+            ];
+        }
+
         return [
             // Row 1: Key value metrics
             (new TotalPatients)->width('1/4'),

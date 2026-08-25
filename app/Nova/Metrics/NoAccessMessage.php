@@ -8,13 +8,14 @@ use Laravel\Nova\Metrics\ValueResult;
 
 class NoAccessMessage extends Value
 {
-    public $name = 'Contact Your Administrator';
+    public $name = 'Access Restricted';
 
     public function calculate(NovaRequest $request): ValueResult
     {
-        return $this->result('No Access')
-            ->format('0,0')
-            ->allowZeroResult();
+        return $this->result(0)
+            ->allowZeroResult()
+            ->prefix('⚠️')
+            ->suffix('Please contact your administrator to be assigned a role and permissions.');
     }
 
     public function ranges(): array
