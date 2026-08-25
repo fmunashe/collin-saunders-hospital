@@ -28,6 +28,11 @@ class Patient extends Resource
 
     public static $search = ['id', 'patient_number', 'first_name', 'last_name', 'id_number', 'email', 'phone'];
 
+    public function title(): string
+    {
+        return "{$this->patient_number} — {$this->first_name} {$this->last_name}";
+    }
+
     public function subtitle(): ?string
     {
         return "{$this->first_name} {$this->last_name}";

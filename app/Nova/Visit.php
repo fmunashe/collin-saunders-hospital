@@ -22,6 +22,21 @@ class Visit extends Resource
 
     public static $search = ['id'];
 
+    public function title(): string
+    {
+        $this->loadMissing('patient');
+        $patientNumber = $this->patient?->patient_number ?? '';
+        $patientName = $this->patient ? "{$this->patient->first_name} {$this->patient->last_name}" : 'Unknown';
+        $date = $this->visit_date ? $this->visit_date->format('d M Y') : '';
+
+        return "{$patientNumber} — {$patientName} — {$date}";
+    }
+
+    public static function searchableColumns(): array
+    {
+        return ['id', 'patient.patient_number', 'patient.first_name', 'patient.last_name'];
+    }
+
     public function fields(NovaRequest $request): array
     {
         return [
