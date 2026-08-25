@@ -23,35 +23,47 @@ class AdjustStock extends Action
 
     public function handle(ActionFields $fields, Collection $models): mixed
     {
-        /** @var Medication $medication */
-        $medication = $models->first();
-
         $actualCount = (int) $fields->get('actual_count');
-        $stockBefore = $medication->stock_quantity;
-        $difference = $actualCount - $stockBefore;
+        $reason = $fields->get('reason');
+        $processed = [];
 
-        $medication->update(['stock_quantity' => $actualCount]);
+        foreach ($models as $medication) {
+            $stockBefore = $medication->stock_quantity;
+            $difference = $actualCount - $stockBefore;
 
-        StockMovement::create([
-            'medication_id' => $medication->id,
-            'user_id' => auth()->id(),
-            'type' => 'adjustment',
-            'quantity' => $difference,
-            'stock_before' => $stockBefore,
-            'stock_after' => $actualCount,
-            'reference' => 'Stock count',
-            'notes' => $fields->get('reason'),
-        ]);
+            $medication->update(['stock_quantity' => $actualCount]);
 
-        $direction = $difference >= 0 ? "+{$difference}" : (string) $difference;
+            StockMovement::create([
+                'medication_id' => $medication->id,
+                'user_id' => auth()->id(),
+                'type' => 'adjustment',
+                'quantity' => $difference,
+                'stock_before' => $stockBefore,
+                'stock_after' => $actualCount,
+                'reference' => 'Stock count',
+                'notes' => $reason,
+            ]);
 
-        return Action::message("{$medication->name}: stock adjusted from {$stockBefore} to {$actualCount} ({$direction})");
+            $processed[] = $medication->name;
+        }
+
+        $count = count($processed);
+
+        if ($count === 1) {
+            $medication = $models->first();
+            $stockBefore = $medication->getOriginal('stock_quantity') ?? $actualCount;
+            $direction = ($actualCount - $stockBefore) >= 0 ? '+' . ($actualCount - $stockBefore) : (string) ($actualCount - $stockBefore);
+
+            return Action::message("{$processed[0]}: stock set to {$actualCount}.");
+        }
+
+        return Action::message("Stock count set to {$actualCount} for {$count} medications.");
     }
 
     public function fields(NovaRequest $request): array
     {
         return [
-            Number::make('Actual Count', 'actual_count')->rules('required', 'integer', 'min:0')->help('Enter the physical count of items on hand'),
+            Number::make('Actual Count', 'actual_count')->rules('required', 'integer', 'min:0')->help('Enter the physical count. When applied to multiple items, all will be set to this value.'),
             Textarea::make('Reason', 'reason')->rules('required')->help('Reason for adjustment (e.g. stock count, breakage, theft)'),
         ];
     }

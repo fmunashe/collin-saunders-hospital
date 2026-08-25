@@ -24,6 +24,8 @@ class Patient extends Resource
 
     public static $title = 'patient_number';
 
+    public static $tableStyle = 'tight';
+
     public static $search = ['id', 'patient_number', 'first_name', 'last_name', 'id_number', 'email', 'phone'];
 
     public function subtitle(): ?string
@@ -74,4 +76,11 @@ class Patient extends Resource
             new PatientsByGender,
         ];
     }
+
+    /**
+     * The pagination per-page options used the resource index.
+     *
+     * @return array<int, int>|int|null
+     */
+    public static $perPageOptions = [5, 10, 15, 25, 50, 100];
 }

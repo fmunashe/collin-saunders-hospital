@@ -14,6 +14,8 @@ class MedicalAidDetail extends Resource
 
     public static $title = 'membership_number';
 
+    public static $tableStyle = 'tight';
+
     public static $search = ['id', 'membership_number', 'main_member_name'];
 
     public static $displayInNavigation = false;
@@ -32,4 +34,10 @@ class MedicalAidDetail extends Resource
             Date::make('Valid Until')->nullable(),
         ];
     }
+    /**
+     * The pagination per-page options used the resource index.
+     *
+     * @return array<int, int>|int|null
+     */
+    public static $perPageOptions = [5, 10, 15, 25, 50, 100];
 }

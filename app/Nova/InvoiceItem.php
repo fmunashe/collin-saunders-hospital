@@ -14,6 +14,7 @@ class InvoiceItem extends Resource
     public static $model = \App\Models\InvoiceItem::class;
 
     public static $title = 'description';
+    public static $tableStyle = 'tight';
 
     public static $search = ['id', 'description', 'tariff_code'];
 
@@ -31,4 +32,11 @@ class InvoiceItem extends Resource
             Currency::make('Total')->rules('required'),
         ];
     }
+
+    /**
+     * The pagination per-page options used the resource index.
+     *
+     * @return array<int, int>|int|null
+     */
+    public static $perPageOptions = [5, 10, 15, 25, 50, 100];
 }

@@ -18,6 +18,7 @@ class Admission extends Resource
     public static $model = \App\Models\Admission::class;
 
     public static $title = 'id';
+    public static $tableStyle = 'tight';
 
     public static $search = ['id', 'reason_for_admission'];
 
@@ -48,4 +49,11 @@ class Admission extends Resource
             new AdministerMedication,
         ];
     }
+
+    /**
+     * The pagination per-page options used the resource index.
+     *
+     * @return array<int, int>|int|null
+     */
+    public static $perPageOptions = [5, 10, 15, 25, 50, 100];
 }

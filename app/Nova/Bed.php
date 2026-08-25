@@ -17,6 +17,7 @@ class Bed extends Resource
     public static $model = \App\Models\Bed::class;
 
     public static $title = 'bed_number';
+    public static $tableStyle = 'tight';
 
     public static $search = ['id', 'bed_number'];
 
@@ -38,4 +39,11 @@ class Bed extends Resource
             new BedsByDepartment,
         ];
     }
+
+    /**
+     * The pagination per-page options used the resource index.
+     *
+     * @return array<int, int>|int|null
+     */
+    public static $perPageOptions = [5, 10, 15, 25, 50, 100];
 }

@@ -20,6 +20,8 @@ class Ward extends Resource
 
     public static $title = 'name';
 
+    public static $tableStyle = 'tight';
+
     public static $search = ['id', 'name'];
 
     public function fields(NovaRequest $request): array
@@ -43,4 +45,11 @@ class Ward extends Resource
             (new WardsByDepartment)->width('1/2'),
         ];
     }
+
+    /**
+     * The pagination per-page options used the resource index.
+     *
+     * @return array<int, int>|int|null
+     */
+    public static $perPageOptions = [5, 10, 15, 25, 50, 100];
 }

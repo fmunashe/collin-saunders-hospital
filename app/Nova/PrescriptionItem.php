@@ -14,6 +14,7 @@ class PrescriptionItem extends Resource
 {
     public static $model = \App\Models\PrescriptionItem::class;
 
+    public static $tableStyle = 'tight';
     public static $title = 'id';
 
     public static $search = ['id', 'dosage'];
@@ -33,4 +34,11 @@ class PrescriptionItem extends Resource
             Boolean::make('Dispensed')->default(false),
         ];
     }
+
+    /**
+     * The pagination per-page options used the resource index.
+     *
+     * @return array<int, int>|int|null
+     */
+    public static $perPageOptions = [5, 10, 15, 25, 50, 100];
 }

@@ -26,6 +26,7 @@ class Invoice extends Resource
     public static $model = \App\Models\Invoice::class;
 
     public static $title = 'invoice_number';
+    public static $tableStyle = 'tight';
 
     public static $search = ['id', 'invoice_number'];
 
@@ -72,4 +73,11 @@ class Invoice extends Resource
             new DownloadInvoice,
         ];
     }
+
+    /**
+     * The pagination per-page options used the resource index.
+     *
+     * @return array<int, int>|int|null
+     */
+    public static $perPageOptions = [5, 10, 15, 25, 50, 100];
 }

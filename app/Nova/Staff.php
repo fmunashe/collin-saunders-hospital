@@ -18,6 +18,8 @@ class Staff extends Resource
 
     public static $title = 'employee_number';
 
+    public static $tableStyle = 'tight';
+
     public static $search = ['id', 'employee_number', 'first_name', 'last_name', 'email'];
 
     public function subtitle(): ?string
@@ -44,4 +46,11 @@ class Staff extends Resource
             Boolean::make('Active', 'is_active')->default(true),
         ];
     }
+
+    /**
+     * The pagination per-page options used the resource index.
+     *
+     * @return array<int, int>|int|null
+     */
+    public static $perPageOptions = [5, 10, 15, 25, 50, 100];
 }

@@ -18,6 +18,8 @@ class StockMovement extends Resource
 
     public static $title = 'id';
 
+    public static $tableStyle = 'tight';
+
     public static $search = ['id', 'reference', 'notes'];
 
     public static $displayInNavigation = false;
@@ -52,4 +54,11 @@ class StockMovement extends Resource
     {
         return false;
     }
+
+    /**
+     * The pagination per-page options used the resource index.
+     *
+     * @return array<int, int>|int|null
+     */
+    public static $perPageOptions = [5, 10, 15, 25, 50, 100];
 }

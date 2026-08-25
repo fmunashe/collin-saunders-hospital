@@ -14,6 +14,7 @@ class Doctor extends Resource
     public static $model = \App\Models\Doctor::class;
 
     public static $title = 'name';
+    public static $tableStyle = 'tight';
 
     public static $search = ['id', 'name', 'practice_number', 'specialisation'];
 
@@ -34,4 +35,11 @@ class Doctor extends Resource
             HasMany::make('Prescriptions'),
         ];
     }
+
+    /**
+     * The pagination per-page options used the resource index.
+     *
+     * @return array<int, int>|int|null
+     */
+    public static $perPageOptions = [5, 10, 15, 25, 50, 100];
 }

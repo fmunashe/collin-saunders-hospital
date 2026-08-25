@@ -22,6 +22,7 @@ class Medication extends Resource
     public static $model = \App\Models\Medication::class;
 
     public static $title = 'name';
+    public static $tableStyle = 'tight';
 
     public static $search = ['id', 'name', 'generic_name'];
 
@@ -65,4 +66,11 @@ class Medication extends Resource
             new AdjustStock,
         ];
     }
+
+    /**
+     * The pagination per-page options used the resource index.
+     *
+     * @return array<int, int>|int|null
+     */
+    public static $perPageOptions = [5, 10, 15, 25, 50, 100];
 }

@@ -15,6 +15,7 @@ class ActionEvent extends Resource
 
     public static $search = ['id', 'name', 'actionable_type', 'batch_id'];
 
+    public static $tableStyle = 'tight';
     public static $globallySearchable = false;
 
     public static function label(): string
@@ -65,4 +66,11 @@ class ActionEvent extends Resource
     {
         return false;
     }
+
+    /**
+     * The pagination per-page options used the resource index.
+     *
+     * @return array<int, int>|int|null
+     */
+    public static $perPageOptions = [5, 10, 15, 25, 50, 100];
 }

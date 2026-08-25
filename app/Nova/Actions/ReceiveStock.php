@@ -24,32 +24,43 @@ class ReceiveStock extends Action
 
     public function handle(ActionFields $fields, Collection $models): mixed
     {
-        /** @var Medication $medication */
-        $medication = $models->first();
-
         $quantity = (int) $fields->get('quantity');
-        $stockBefore = $medication->stock_quantity;
+        $reference = $fields->get('reference');
+        $notes = $fields->get('notes');
+        $processed = [];
 
-        $medication->increment('stock_quantity', $quantity);
+        foreach ($models as $medication) {
+            $stockBefore = $medication->stock_quantity;
 
-        StockMovement::create([
-            'medication_id' => $medication->id,
-            'user_id' => auth()->id(),
-            'type' => 'received',
-            'quantity' => $quantity,
-            'stock_before' => $stockBefore,
-            'stock_after' => $stockBefore + $quantity,
-            'reference' => $fields->get('reference'),
-            'notes' => $fields->get('notes'),
-        ]);
+            $medication->increment('stock_quantity', $quantity);
 
-        return Action::message("Received {$quantity} units of {$medication->name}. New stock: " . ($stockBefore + $quantity));
+            StockMovement::create([
+                'medication_id' => $medication->id,
+                'user_id' => auth()->id(),
+                'type' => 'received',
+                'quantity' => $quantity,
+                'stock_before' => $stockBefore,
+                'stock_after' => $stockBefore + $quantity,
+                'reference' => $reference,
+                'notes' => $notes,
+            ]);
+
+            $processed[] = $medication->name;
+        }
+
+        $count = count($processed);
+
+        if ($count === 1) {
+            return Action::message("Received {$quantity} units of {$processed[0]}.");
+        }
+
+        return Action::message("Received {$quantity} units each for {$count} medications.");
     }
 
     public function fields(NovaRequest $request): array
     {
         return [
-            Number::make('Quantity')->rules('required', 'integer', 'min:1'),
+            Number::make('Quantity')->rules('required', 'integer', 'min:1')->help('This quantity will be added to each selected medication'),
             Text::make('Reference', 'reference')->help('e.g. PO number, supplier invoice')->nullable(),
             Textarea::make('Notes')->nullable(),
         ];
