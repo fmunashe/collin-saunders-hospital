@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Nova\ActionEvent;
 use App\Nova\Admission;
 use App\Nova\Bed;
 use App\Nova\Dashboards\Main;
@@ -81,6 +82,9 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
                     MenuGroup::make('Roles & Permissions', [
                         MenuItem::resource(Role::class)->icon('shield-check'),
                         MenuItem::resource(Permission::class)->icon('key'),
+                    ]),
+                    MenuGroup::make('Audit', [
+                        MenuItem::resource(ActionEvent::class)->icon('clipboard-document-list'),
                     ]),
                 ])->icon('user-group')->collapsable(),
 

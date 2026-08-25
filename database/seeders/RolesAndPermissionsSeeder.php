@@ -33,6 +33,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'user',
             'role',
             'permission',
+            'action-event',
         ];
 
         $actions = ['access', 'show', 'create', 'update', 'delete', 'restore'];
