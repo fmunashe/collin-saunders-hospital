@@ -34,6 +34,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'role',
             'permission',
             'action-event',
+            'stock-movement',
         ];
 
         $actions = ['access', 'show', 'create', 'update', 'delete', 'restore'];
@@ -94,6 +95,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'prescription-access', 'prescription-show', 'prescription-update',
             'prescription-item-access', 'prescription-item-show', 'prescription-item-update',
             'patient-access', 'patient-show',
+            'stock-movement-access', 'stock-movement-show',
         ]);
 
         // Receptionist permissions
