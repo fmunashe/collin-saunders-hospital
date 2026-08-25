@@ -22,7 +22,7 @@ class Prescription extends Resource
     public function fields(NovaRequest $request): array
     {
         return [
-            ID::make()->sortable(),
+            ID::make()->sortable()->onlyOnDetail(),
             BelongsTo::make('Patient')->searchable()->rules('required'),
             BelongsTo::make('Doctor')->searchable()->rules('required'),
             BelongsTo::make('Visit')->nullable(),

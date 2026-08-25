@@ -28,7 +28,7 @@
       </h1>
 
       <p class="dark:text-gray-300 text-gray-600 text-lg text-center max-w-md">
-        This system's license has expired. Please contact your administrator or the developer Farai on +27 78 386 9706 for support.
+        This system's license has expired. Please contact your administrator or the service provider on info@analyticshive.com for support.
       </p>
     </Card>
   </div>

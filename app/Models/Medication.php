@@ -27,6 +27,11 @@ class Medication extends Model
         return $this->hasMany(PrescriptionItem::class);
     }
 
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
     public function isLowStock(): bool
     {
         return $this->stock_quantity <= $this->reorder_level;

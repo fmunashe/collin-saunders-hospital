@@ -4,6 +4,14 @@ namespace App\Nova;
 
 use App\Enums\BillingType;
 use App\Enums\InvoiceStatus;
+use App\Nova\Actions\DownloadInvoice;
+use App\Nova\Filters\InvoiceNumber;
+use App\Nova\Filters\InvoicePatientNumber;
+use App\Nova\Filters\InvoicePaymentMethod;
+use App\Nova\Filters\InvoiceStatus as InvoiceStatusFilter;
+use App\Nova\Metrics\InvoicesByPaymentMethod;
+use App\Nova\Metrics\InvoicesByStatus as InvoicesByStatusMetric;
+use App\Nova\Metrics\RevenuePerDay;
 use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Fields\Currency;
 use Laravel\Nova\Fields\HasMany;
@@ -24,7 +32,7 @@ class Invoice extends Resource
     public function fields(NovaRequest $request): array
     {
         return [
-            ID::make()->sortable(),
+            ID::make()->sortable()->onlyOnDetail(),
             Text::make('Invoice Number')->sortable()->rules('required')->creationRules('unique:invoices,invoice_number')->updateRules('unique:invoices,invoice_number,{{resourceId}}'),
             BelongsTo::make('Patient')->searchable()->rules('required'),
             BelongsTo::make('Visit')->nullable(),
@@ -36,6 +44,32 @@ class Invoice extends Resource
             Select::make('Status')->options(collect(InvoiceStatus::cases())->mapWithKeys(fn ($s) => [$s->value => str_replace('_', ' ', ucfirst($s->value))]))->default('pending')->rules('required')->displayUsingLabels(),
             Textarea::make('Notes')->nullable()->hideFromIndex(),
             HasMany::make('Items', 'items', InvoiceItem::class),
+        ];
+    }
+
+    public function cards(NovaRequest $request): array
+    {
+        return [
+            (new InvoicesByStatusMetric)->width('1/2'),
+            (new InvoicesByPaymentMethod)->width('1/2'),
+            (new RevenuePerDay)->width('full'),
+        ];
+    }
+
+    public function filters(NovaRequest $request): array
+    {
+        return [
+            new InvoicePatientNumber,
+            new InvoiceNumber,
+            new InvoicePaymentMethod,
+            new InvoiceStatusFilter,
+        ];
+    }
+
+    public function actions(NovaRequest $request): array
+    {
+        return [
+            new DownloadInvoice,
         ];
     }
 }

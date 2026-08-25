@@ -21,7 +21,7 @@ class MedicalAidDetail extends Resource
     public function fields(NovaRequest $request): array
     {
         return [
-            ID::make()->sortable(),
+            ID::make()->sortable()->onlyOnDetail(),
             BelongsTo::make('Patient'),
             BelongsTo::make('Medical Aid Scheme', 'medicalAidScheme', MedicalAidScheme::class)->rules('required'),
             Text::make('Membership Number')->rules('required', 'max:255'),

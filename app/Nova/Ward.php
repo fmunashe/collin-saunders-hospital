@@ -3,6 +3,8 @@
 namespace App\Nova;
 
 use App\Enums\WardType;
+use App\Nova\Metrics\WardsByDepartment;
+use App\Nova\Metrics\WardsByType;
 use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Fields\Boolean;
 use Laravel\Nova\Fields\HasMany;
@@ -23,7 +25,7 @@ class Ward extends Resource
     public function fields(NovaRequest $request): array
     {
         return [
-            ID::make()->sortable(),
+            ID::make()->sortable()->onlyOnDetail(),
             BelongsTo::make('Department')->rules('required'),
             Text::make('Name')->sortable()->rules('required', 'max:255'),
             Select::make('Type')->options(collect(WardType::cases())->mapWithKeys(fn ($t) => [$t->value => ucfirst($t->value)]))->rules('required')->displayUsingLabels(),
@@ -31,6 +33,14 @@ class Ward extends Resource
             Boolean::make('Active', 'is_active')->default(true),
             HasMany::make('Beds'),
             HasMany::make('Admissions'),
+        ];
+    }
+
+    public function cards(NovaRequest $request): array
+    {
+        return [
+            (new WardsByType)->width('1/2'),
+            (new WardsByDepartment)->width('1/2'),
         ];
     }
 }

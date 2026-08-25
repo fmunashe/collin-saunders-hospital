@@ -3,6 +3,7 @@
 namespace App\Nova;
 
 use App\Enums\AdmissionStatus;
+use App\Nova\Actions\AdministerMedication;
 use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Fields\DateTime;
 use Laravel\Nova\Fields\HasMany;
@@ -23,7 +24,7 @@ class Admission extends Resource
     public function fields(NovaRequest $request): array
     {
         return [
-            ID::make()->sortable(),
+            ID::make()->sortable()->onlyOnDetail(),
             BelongsTo::make('Patient')->searchable()->rules('required'),
             BelongsTo::make('Doctor')->searchable()->rules('required'),
             BelongsTo::make('Department')->rules('required'),
@@ -36,7 +37,15 @@ class Admission extends Resource
             Textarea::make('Discharge Notes')->nullable()->hideFromIndex(),
             Select::make('Status')->options(collect(AdmissionStatus::cases())->mapWithKeys(fn ($s) => [$s->value => ucfirst($s->value)]))->default('admitted')->rules('required')->displayUsingLabels(),
             HasMany::make('Prescriptions'),
+            HasMany::make('Medication Administrations', 'medicationAdministrations', MedicationAdministration::class),
             HasOne::make('Invoice'),
+        ];
+    }
+
+    public function actions(NovaRequest $request): array
+    {
+        return [
+            new AdministerMedication,
         ];
     }
 }

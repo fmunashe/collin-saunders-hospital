@@ -5,6 +5,10 @@ namespace App\Nova;
 use App\Enums\BillingType;
 use App\Enums\Gender;
 use App\Enums\PatientType;
+use App\Nova\Metrics\PatientsByBilling;
+use App\Nova\Metrics\PatientsByGender;
+use App\Nova\Metrics\PatientsByType;
+use Laravel\Nova\Fields\Badge;
 use Laravel\Nova\Fields\Date;
 use Laravel\Nova\Fields\HasMany;
 use Laravel\Nova\Fields\HasOne;
@@ -30,8 +34,14 @@ class Patient extends Resource
     public function fields(NovaRequest $request): array
     {
         return [
-            ID::make()->sortable(),
-            Text::make('Patient Number')->sortable()->rules('required')->creationRules('unique:patients,patient_number')->updateRules('unique:patients,patient_number,{{resourceId}}'),
+            ID::make()->sortable()->onlyOnDetail(),
+            Text::make('Patient Number')->sortable()->readonly()->hideWhenCreating(),
+            Badge::make('Care Status', function () {
+                return $this->isInpatient() ? 'Inpatient' : 'Outpatient';
+            })->map([
+                'Inpatient' => 'danger',
+                'Outpatient' => 'success',
+            ])->exceptOnForms(),
             Text::make('First Name')->sortable()->rules('required', 'max:255'),
             Text::make('Last Name')->sortable()->rules('required', 'max:255'),
             Text::make('Full Name', fn () => $this->full_name)->onlyOnIndex(),
@@ -53,6 +63,15 @@ class Patient extends Resource
             HasMany::make('Admissions'),
             HasMany::make('Prescriptions'),
             HasMany::make('Invoices'),
+        ];
+    }
+
+    public function cards(NovaRequest $request): array
+    {
+        return [
+            new PatientsByType,
+            new PatientsByBilling,
+            new PatientsByGender,
         ];
     }
 }

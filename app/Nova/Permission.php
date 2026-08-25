@@ -20,7 +20,7 @@ class Permission extends Resource
     public function fields(NovaRequest $request): array
     {
         return [
-            ID::make()->sortable(),
+            ID::make()->sortable()->onlyOnDetail(),
             Text::make('Name')->sortable()->rules('required', 'max:255'),
             Text::make('Guard Name')->default('web')->rules('required'),
             BelongsToMany::make('Roles', 'roles', Role::class),

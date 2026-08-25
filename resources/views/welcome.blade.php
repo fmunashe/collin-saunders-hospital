@@ -10,8 +10,8 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: { 50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac', 400: '#4ade80', 500: '#006838', 600: '#00542d', 700: '#003d20', 800: '#002d18', 900: '#001f10' },
-                        accent: { 400: '#fde047', 500: '#FDB913', 600: '#d49b00' },
+                        primary: { 50: '#e6f5ed', 100: '#ccebdb', 200: '#99d7b7', 300: '#66c393', 400: '#33af6f', 500: '#006838', 600: '#00542d', 700: '#003d20', 800: '#002d18', 900: '#001f10' },
+                        accent: { 50: '#fff9e6', 100: '#fef3cc', 200: '#fde799', 300: '#fddb66', 400: '#fdcf33', 500: '#FDB913', 600: '#d49b00', 700: '#a07400', 800: '#6b4e00', 900: '#352700' },
                     }
                 }
             }
@@ -49,7 +49,7 @@
                     Quality Healthcare,<br>
                     <span class="text-accent-500">Simplified.</span>
                 </h1>
-                <p class="mt-6 text-lg md:text-xl text-green-100 max-w-2xl mx-auto">
+                <p class="mt-6 text-lg md:text-xl text-primary-100 max-w-2xl mx-auto">
                     A comprehensive hospital management system designed to streamline patient care, pharmacy operations, billing, and administrative workflows.
                 </p>
                 <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
@@ -130,19 +130,19 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
                 <div>
                     <div class="text-3xl md:text-4xl font-bold text-accent-500">24/7</div>
-                    <div class="mt-2 text-green-100">Emergency Care</div>
+                    <div class="mt-2 text-primary-100">Emergency Care</div>
                 </div>
                 <div>
                     <div class="text-3xl md:text-4xl font-bold text-accent-500">10+</div>
-                    <div class="mt-2 text-green-100">Departments</div>
+                    <div class="mt-2 text-primary-100">Departments</div>
                 </div>
                 <div>
                     <div class="text-3xl md:text-4xl font-bold text-accent-500">50+</div>
-                    <div class="mt-2 text-green-100">Medical Staff</div>
+                    <div class="mt-2 text-primary-100">Medical Staff</div>
                 </div>
                 <div>
                     <div class="text-3xl md:text-4xl font-bold text-accent-500">100+</div>
-                    <div class="mt-2 text-green-100">Bed Capacity</div>
+                    <div class="mt-2 text-primary-100">Bed Capacity</div>
                 </div>
             </div>
         </div>

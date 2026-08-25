@@ -20,7 +20,7 @@ class Doctor extends Resource
     public function fields(NovaRequest $request): array
     {
         return [
-            ID::make()->sortable(),
+            ID::make()->sortable()->onlyOnDetail(),
             BelongsTo::make('User')->nullable()->searchable(),
             BelongsTo::make('Department')->rules('required'),
             Text::make('Name')->sortable()->rules('required', 'max:255'),

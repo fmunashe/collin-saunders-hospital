@@ -22,7 +22,7 @@ class InvoiceItem extends Resource
     public function fields(NovaRequest $request): array
     {
         return [
-            ID::make()->sortable(),
+            ID::make()->sortable()->onlyOnDetail(),
             BelongsTo::make('Invoice'),
             Text::make('Description')->rules('required', 'max:255'),
             Text::make('Tariff Code')->nullable(),

@@ -17,6 +17,28 @@ class Patient extends Model
 
     protected $guarded = [];
 
+    protected static function booted(): void
+    {
+        static::creating(function (Patient $patient) {
+            if (empty($patient->patient_number)) {
+                $patient->patient_number = static::generatePatientNumber();
+            }
+        });
+    }
+
+    public static function generatePatientNumber(): string
+    {
+        $prefix = 'PT';
+        $latest = static::withTrashed()
+            ->where('patient_number', 'like', $prefix.'%')
+            ->orderBy('patient_number', 'desc')
+            ->value('patient_number');
+
+        $nextNumber = $latest ? (int) substr($latest, strlen($prefix)) + 1 : 1;
+
+        return $prefix.str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+    }
+
     protected function casts(): array
     {
         return [

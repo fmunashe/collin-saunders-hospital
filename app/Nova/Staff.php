@@ -28,7 +28,7 @@ class Staff extends Resource
     public function fields(NovaRequest $request): array
     {
         return [
-            ID::make()->sortable(),
+            ID::make()->sortable()->onlyOnDetail(),
             Text::make('Employee Number')->sortable()->rules('required')->creationRules('unique:staff,employee_number')->updateRules('unique:staff,employee_number,{{resourceId}}'),
             Text::make('First Name')->sortable()->rules('required', 'max:255'),
             Text::make('Last Name')->sortable()->rules('required', 'max:255'),

@@ -23,7 +23,7 @@ class PrescriptionItem extends Resource
     public function fields(NovaRequest $request): array
     {
         return [
-            ID::make()->sortable(),
+            ID::make()->sortable()->onlyOnDetail(),
             BelongsTo::make('Prescription'),
             BelongsTo::make('Medication')->searchable()->rules('required'),
             Text::make('Dosage')->rules('required', 'max:255'),

@@ -55,6 +55,11 @@ class Admission extends Model
         return $this->hasMany(Prescription::class);
     }
 
+    public function medicationAdministrations(): HasMany
+    {
+        return $this->hasMany(MedicationAdministration::class);
+    }
+
     public function invoice(): HasOne
     {
         return $this->hasOne(Invoice::class);
