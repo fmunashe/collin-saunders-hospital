@@ -58,6 +58,27 @@ class PrescriptionItem extends Model
                 ]);
             }
         });
+
+        static::updated(function (PrescriptionItem $item) {
+            if ($item->isDirty('dispensed')) {
+                $item->syncPrescriptionStatus();
+            }
+        });
+    }
+
+    public function syncPrescriptionStatus(): void
+    {
+        $prescription = $this->prescription;
+        $total = $prescription->items()->count();
+        $dispensed = $prescription->items()->where('dispensed', true)->count();
+
+        if ($dispensed === $total) {
+            $prescription->update(['status' => 'dispensed']);
+        } elseif ($dispensed > 0) {
+            $prescription->update(['status' => 'partially_dispensed']);
+        } else {
+            $prescription->update(['status' => 'pending']);
+        }
     }
 
     public function prescription(): BelongsTo

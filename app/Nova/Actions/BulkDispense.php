@@ -68,6 +68,12 @@ class BulkDispense extends Action
             $messages[] = "Insufficient stock: " . implode(', ', $outOfStock);
         }
 
+        // Sync prescription statuses for affected prescriptions
+        $models->pluck('prescription_id')->unique()->each(function ($prescriptionId) {
+            $item = PrescriptionItem::where('prescription_id', $prescriptionId)->first();
+            $item?->syncPrescriptionStatus();
+        });
+
         $message = implode('. ', $messages) . '.';
 
         if (count($outOfStock) > 0) {
