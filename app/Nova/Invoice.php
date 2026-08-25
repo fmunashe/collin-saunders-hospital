@@ -41,8 +41,8 @@ class Invoice extends Resource
             Currency::make('Total Amount')->sortable()->rules('required'),
             Currency::make('Paid Amount')->sortable()->default(0),
             Currency::make('Balance', fn () => $this->balance)->onlyOnDetail(),
-            Select::make('Payment Method')->options(collect(BillingType::cases())->mapWithKeys(fn ($t) => [$t->value => str_replace('_', ' ', ucfirst($t->value))]))->rules('required')->displayUsingLabels(),
-            Select::make('Status')->options(collect(InvoiceStatus::cases())->mapWithKeys(fn ($s) => [$s->value => str_replace('_', ' ', ucfirst($s->value))]))->default('pending')->rules('required')->displayUsingLabels(),
+            Select::make('Payment Method')->options(collect(BillingType::cases())->mapWithKeys(fn ($t) => [$t->value => str_replace('_', ' ', ucfirst($t->value))]))->rules('required')->searchable()->displayUsingLabels(),
+            Select::make('Status')->options(collect(InvoiceStatus::cases())->mapWithKeys(fn ($s) => [$s->value => str_replace('_', ' ', ucfirst($s->value))]))->default('pending')->rules('required')->searchable()->displayUsingLabels(),
             Textarea::make('Notes')->nullable()->hideFromIndex(),
             HasMany::make('Items', 'items', InvoiceItem::class),
         ];

@@ -50,7 +50,7 @@ class Admission extends Resource
             Textarea::make('Reason for Admission')->rules('required'),
             Textarea::make('Diagnosis')->nullable()->hideFromIndex(),
             Textarea::make('Discharge Notes')->nullable()->hideFromIndex(),
-            Select::make('Status')->options(collect(AdmissionStatus::cases())->mapWithKeys(fn ($s) => [$s->value => ucfirst($s->value)]))->default('admitted')->rules('required')->displayUsingLabels(),
+            Select::make('Status')->options(collect(AdmissionStatus::cases())->mapWithKeys(fn ($s) => [$s->value => ucfirst($s->value)]))->default('admitted')->rules('required')->searchable()->displayUsingLabels(),
             HasMany::make('Prescriptions'),
             HasMany::make('Medication Administrations', 'medicationAdministrations', MedicationAdministration::class),
             HasOne::make('Invoice'),

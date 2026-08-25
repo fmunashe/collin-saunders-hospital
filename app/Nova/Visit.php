@@ -33,7 +33,7 @@ class Visit extends Resource
             Textarea::make('Complaint')->nullable(),
             Textarea::make('Diagnosis')->nullable()->hideFromIndex(),
             Textarea::make('Notes')->nullable()->hideFromIndex(),
-            Select::make('Status')->options(collect(VisitStatus::cases())->mapWithKeys(fn ($s) => [$s->value => str_replace('_', ' ', ucfirst($s->value))]))->default('waiting')->rules('required')->displayUsingLabels(),
+            Select::make('Status')->options(collect(VisitStatus::cases())->mapWithKeys(fn ($s) => [$s->value => str_replace('_', ' ', ucfirst($s->value))]))->default('waiting')->rules('required')->searchable()->displayUsingLabels(),
             HasMany::make('Prescriptions'),
             HasOne::make('Invoice'),
         ];

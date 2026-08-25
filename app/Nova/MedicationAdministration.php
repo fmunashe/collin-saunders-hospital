@@ -41,11 +41,11 @@ class MedicationAdministration extends Resource
             BelongsTo::make('Admission')->hideFromIndex(),
             BelongsTo::make('Medication')->searchable()->rules('required'),
             Text::make('Dosage')->rules('required', 'max:100')->help('e.g. 500mg, 10ml, 2 tablets'),
-            Select::make('Route')->options(collect(AdministrationRoute::cases())->mapWithKeys(fn ($r) => [$r->value => strtoupper($r->value)]))->rules('required')->displayUsingLabels(),
+            Select::make('Route')->options(collect(AdministrationRoute::cases())->mapWithKeys(fn ($r) => [$r->value => strtoupper($r->value)]))->rules('required')->searchable()->displayUsingLabels(),
             DateTime::make('Administered At')->rules('required')->default(now()),
             DateTime::make('Scheduled At')->nullable()->hideFromIndex(),
             BelongsTo::make('Administered By', 'administeredBy', User::class)->nullable()->default(auth()->id())->hideFromIndex(),
-            Select::make('Status')->options(collect(AdministrationStatus::cases())->mapWithKeys(fn ($s) => [$s->value => ucfirst($s->value)]))->default('administered')->rules('required')->displayUsingLabels(),
+            Select::make('Status')->options(collect(AdministrationStatus::cases())->mapWithKeys(fn ($s) => [$s->value => ucfirst($s->value)]))->default('administered')->rules('required')->searchable()->displayUsingLabels(),
             Textarea::make('Notes')->nullable()->hideFromIndex(),
         ];
     }

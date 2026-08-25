@@ -30,7 +30,7 @@ class StockMovement extends Resource
             ID::make()->sortable()->onlyOnDetail(),
             BelongsTo::make('Medication')->searchable(),
             BelongsTo::make('User')->nullable(),
-            Select::make('Type')->options(collect(StockMovementType::cases())->mapWithKeys(fn ($t) => [$t->value => ucfirst($t->value)]))->displayUsingLabels(),
+            Select::make('Type')->options(collect(StockMovementType::cases())->mapWithKeys(fn ($t) => [$t->value => ucfirst($t->value)]))->searchable()->displayUsingLabels(),
             Number::make('Quantity')->sortable(),
             Number::make('Stock Before'),
             Number::make('Stock After'),

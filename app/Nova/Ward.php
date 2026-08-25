@@ -30,7 +30,7 @@ class Ward extends Resource
             ID::make()->sortable()->onlyOnDetail(),
             BelongsTo::make('Department')->rules('required'),
             Text::make('Name')->sortable()->rules('required', 'max:255'),
-            Select::make('Type')->options(collect(WardType::cases())->mapWithKeys(fn ($t) => [$t->value => ucfirst($t->value)]))->rules('required')->displayUsingLabels(),
+            Select::make('Type')->options(collect(WardType::cases())->mapWithKeys(fn ($t) => [$t->value => ucfirst($t->value)]))->rules('required')->searchable()->displayUsingLabels(),
             Number::make('Capacity')->rules('required', 'integer', 'min:1'),
             Boolean::make('Active', 'is_active')->default(true),
             HasMany::make('Beds'),

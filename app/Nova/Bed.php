@@ -27,7 +27,7 @@ class Bed extends Resource
             ID::make()->sortable()->onlyOnDetail(),
             BelongsTo::make('Ward')->rules('required'),
             Text::make('Bed Number')->sortable()->rules('required', 'max:50'),
-            Select::make('Status')->options(collect(BedStatus::cases())->mapWithKeys(fn ($s) => [$s->value => ucfirst($s->value)]))->default('available')->rules('required')->displayUsingLabels(),
+            Select::make('Status')->options(collect(BedStatus::cases())->mapWithKeys(fn ($s) => [$s->value => ucfirst($s->value)]))->default('available')->rules('required')->searchable()->displayUsingLabels(),
         ];
     }
 
