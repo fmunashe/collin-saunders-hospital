@@ -22,7 +22,7 @@ class MedicationAdministration extends Resource
 
     public static $search = ['id'];
 
-    public static $displayInNavigation = false;
+    public static $displayInNavigation = true;
 
     public static function label(): string
     {

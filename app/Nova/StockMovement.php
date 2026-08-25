@@ -22,7 +22,7 @@ class StockMovement extends Resource
 
     public static $search = ['id', 'reference', 'notes'];
 
-    public static $displayInNavigation = false;
+    public static $displayInNavigation = true;
 
     public function fields(NovaRequest $request): array
     {

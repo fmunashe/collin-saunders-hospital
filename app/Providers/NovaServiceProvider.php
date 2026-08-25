@@ -10,6 +10,7 @@ use App\Nova\Doctor;
 use App\Nova\Invoice;
 use App\Nova\MedicalAidScheme;
 use App\Nova\Medication;
+use App\Nova\MedicationAdministration;
 use App\Nova\Patient;
 use App\Nova\Permission;
 use App\Nova\Prescription;
@@ -102,6 +103,7 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
                         MenuItem::resource(Visit::class)->icon('calendar-days'),
                         MenuItem::resource(Admission::class)->icon('building-office'),
                         MenuItem::resource(Invoice::class)->icon('banknotes'),
+                        MenuItem::resource(MedicationAdministration::class)->icon('light-bulb'),
                     ])
                 ])->icon('identification')->collapsable(),
 
