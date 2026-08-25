@@ -12,9 +12,19 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $user = User::factory()->create([
+        $admin = User::factory()->create([
             'name' => 'Admin User',
             'email' => 'admin@hms.local',
+        ]);
+
+        $noRoleUser = User::factory()->create([
+            'name' => 'New User',
+            'email' => 'user@hms.local',
+        ]);
+
+        $supportUser = User::factory()->create([
+            'name' => 'Support User',
+            'email' => 'support@hms.local',
         ]);
 
         $this->call([
@@ -24,6 +34,10 @@ class DatabaseSeeder extends Seeder
             TestDataSeeder::class,
         ]);
 
-        $user->assignRole('admin');
+        $admin->assignRole('admin');
+
+        // Support user gets only dashboard and user access
+        $supportUser->assignRole('support_staff');
+        $supportUser->givePermissionTo(['user-access', 'user-show']);
     }
 }

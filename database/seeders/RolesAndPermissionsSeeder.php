@@ -31,6 +31,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'invoice',
             'invoice-item',
             'user',
+            'role',
+            'permission',
         ];
 
         $actions = ['access', 'show', 'create', 'update', 'delete', 'restore'];

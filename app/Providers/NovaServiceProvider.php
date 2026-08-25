@@ -61,6 +61,14 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
         //
 
         Nova::mainMenu(function (Request $request) {
+            $user = $request->user();
+
+            if ($user && $user->roles->isEmpty()) {
+                return [
+                    MenuSection::dashboard(\App\Nova\Dashboards\NoAccess::class)->icon('home'),
+                ];
+            }
+
             return [
                 MenuSection::dashboard(Main::class)->icon('home'),
 
@@ -153,6 +161,14 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
      */
     protected function dashboards(): array
     {
+        $user = auth()->user();
+
+        if ($user && $user->roles->isEmpty()) {
+            return [
+                new \App\Nova\Dashboards\NoAccess,
+            ];
+        }
+
         return [
             new \App\Nova\Dashboards\Main,
         ];
