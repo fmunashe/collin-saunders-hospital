@@ -22,10 +22,11 @@ class Admission extends Resource
     public function title(): string
     {
         $this->loadMissing('patient');
+        $patientNumber = $this->patient?->patient_number ?? '';
         $patientName = $this->patient ? "{$this->patient->first_name} {$this->patient->last_name}" : 'Unknown';
         $date = $this->admitted_at ? $this->admitted_at->format('d M Y') : '';
 
-        return "{$patientName} — {$date}";
+        return "{$patientNumber} — {$patientName} — {$date}";
     }
     public static $tableStyle = 'tight';
 
