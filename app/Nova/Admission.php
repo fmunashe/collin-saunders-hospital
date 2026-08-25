@@ -18,9 +18,23 @@ class Admission extends Resource
     public static $model = \App\Models\Admission::class;
 
     public static $title = 'id';
+
+    public function title(): string
+    {
+        $this->loadMissing('patient');
+        $patientName = $this->patient ? "{$this->patient->first_name} {$this->patient->last_name}" : 'Unknown';
+        $date = $this->admitted_at ? $this->admitted_at->format('d M Y') : '';
+
+        return "{$patientName} — {$date}";
+    }
     public static $tableStyle = 'tight';
 
     public static $search = ['id', 'reason_for_admission'];
+
+    public static function searchableColumns(): array
+    {
+        return ['id', 'reason_for_admission', 'patient.first_name', 'patient.last_name'];
+    }
 
     public function fields(NovaRequest $request): array
     {
