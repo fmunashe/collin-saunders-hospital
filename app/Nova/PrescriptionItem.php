@@ -2,6 +2,7 @@
 
 namespace App\Nova;
 
+use App\Nova\Actions\BulkDispense;
 use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Fields\Boolean;
 use Laravel\Nova\Fields\ID;
@@ -32,6 +33,13 @@ class PrescriptionItem extends Resource
             Number::make('Duration (Days)', 'duration_days')->nullable(),
             Textarea::make('Instructions')->nullable(),
             Boolean::make('Dispensed')->default(false),
+        ];
+    }
+
+    public function actions(NovaRequest $request): array
+    {
+        return [
+            new BulkDispense,
         ];
     }
 
