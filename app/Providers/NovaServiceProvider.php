@@ -15,6 +15,7 @@ use App\Nova\Permission;
 use App\Nova\Prescription;
 use App\Nova\Role;
 use App\Nova\Staff;
+use App\Nova\StockMovement;
 use App\Nova\User;
 use App\Nova\Visit;
 use App\Nova\Ward;
@@ -109,7 +110,8 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
                         MenuItem::resource(Invoice::class)->icon('banknotes'),
                         MenuItem::resource(Medication::class)->icon('sparkles'),
                         MenuItem::resource(Prescription::class)->icon('eye-dropper'),
-                        MenuItem::resource(MedicalAidScheme::class)->icon('scale'),
+                        MenuItem::resource(MedicalAidScheme::class)->icon('bolt'),
+                        MenuItem::resource(StockMovement::class)->icon('scale'),
                     ])
                 ])->icon('beaker')->collapsable(),
             ];
