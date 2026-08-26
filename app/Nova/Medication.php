@@ -61,10 +61,10 @@ class Medication extends Resource
 
     public function actions(NovaRequest $request): array
     {
-        return [
+        return array_merge(parent::actions($request), [
             new ReceiveStock,
             new AdjustStock,
-        ];
+        ]);
     }
 
     /**

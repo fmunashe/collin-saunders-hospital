@@ -14,6 +14,7 @@ use App\Nova\MedicationAdministration;
 use App\Nova\Patient;
 use App\Nova\Permission;
 use App\Nova\Prescription;
+use App\Nova\Referral;
 use App\Nova\Role;
 use App\Nova\Staff;
 use App\Nova\StockMovement;
@@ -102,6 +103,7 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
                         MenuItem::resource(Patient::class)->icon('identification'),
                         MenuItem::resource(Visit::class)->icon('calendar-days'),
                         MenuItem::resource(Admission::class)->icon('building-office'),
+                        MenuItem::resource(Referral::class)->icon('arrow-top-right-on-square'),
                         MenuItem::resource(Invoice::class)->icon('banknotes'),
                         MenuItem::resource(MedicationAdministration::class)->icon('light-bulb'),
                     ])

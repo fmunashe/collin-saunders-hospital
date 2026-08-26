@@ -60,9 +60,9 @@ class Admission extends Resource
 
     public function actions(NovaRequest $request): array
     {
-        return [
+        return array_merge(parent::actions($request), [
             new AdministerMedication,
-        ];
+        ]);
     }
 
     /**

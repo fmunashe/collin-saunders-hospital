@@ -36,6 +36,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'action-event',
             'stock-movement',
             'medication-administration',
+            'referral',
         ];
 
         $actions = ['access', 'show', 'create', 'update', 'delete', 'restore'];
@@ -76,6 +77,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'ward-access', 'ward-show',
             'bed-access', 'bed-show',
             'staff-access', 'staff-show',
+            'referral-access', 'referral-show', 'referral-create', 'referral-update',
         ]);
 
         // Nurse permissions

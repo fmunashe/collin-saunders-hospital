@@ -19,7 +19,7 @@ class Prescription extends Resource
 
     public static $tableStyle = 'tight';
 
-    public static $search = ['id'];
+    public static $search = ['id','patient.patient_number', 'patient.first_name', 'patient.last_name', 'doctor.name'];
 
     public function fields(NovaRequest $request): array
     {
@@ -30,6 +30,8 @@ class Prescription extends Resource
             BelongsTo::make('Visit')->nullable(),
             BelongsTo::make('Admission')->nullable(),
             DateTime::make('Prescribed At')->rules('required')->sortable()->default(now()),
+            DateTime::make('Dispensed At')->readonly()->sortable()->hideWhenCreating()->hideWhenUpdating(),
+            BelongsTo::make('Dispensed By', 'dispensedBy', User::class)->readonly()->hideWhenCreating()->hideWhenUpdating()->nullable(),
             Select::make('Status')->options(collect(PrescriptionStatus::cases())->mapWithKeys(fn ($s) => [$s->value => str_replace('_', ' ', ucfirst($s->value))]))->default('pending')->rules('required')->searchable()->displayUsingLabels(),
             Textarea::make('Notes')->nullable()->hideFromIndex(),
             HasMany::make('Items', 'items', PrescriptionItem::class),

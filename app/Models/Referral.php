@@ -2,24 +2,25 @@
 
 namespace App\Models;
 
-use App\Enums\PrescriptionStatus;
+use App\Enums\ReferralPriority;
+use App\Enums\ReferralStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Prescription extends Model
+class Referral extends Model
 {
-    use HasUuids;
+    use HasUuids, SoftDeletes;
 
     protected $guarded = [];
 
     protected function casts(): array
     {
         return [
-            'prescribed_at' => 'datetime',
-            'dispensed_at' => 'datetime',
-            'status' => PrescriptionStatus::class,
+            'referral_date' => 'date',
+            'priority' => ReferralPriority::class,
+            'status' => ReferralStatus::class,
         ];
     }
 
@@ -28,9 +29,9 @@ class Prescription extends Model
         return $this->belongsTo(Patient::class);
     }
 
-    public function doctor(): BelongsTo
+    public function referringDoctor(): BelongsTo
     {
-        return $this->belongsTo(Doctor::class);
+        return $this->belongsTo(Doctor::class, 'referring_doctor_id');
     }
 
     public function visit(): BelongsTo
@@ -41,15 +42,5 @@ class Prescription extends Model
     public function admission(): BelongsTo
     {
         return $this->belongsTo(Admission::class);
-    }
-
-    public function items(): HasMany
-    {
-        return $this->hasMany(PrescriptionItem::class);
-    }
-
-    public function dispensedBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'dispensed_by');
     }
 }

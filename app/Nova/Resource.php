@@ -2,6 +2,7 @@
 
 namespace App\Nova;
 
+use App\Nova\Actions\ExportResources;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Resource as NovaResource;
@@ -22,6 +23,17 @@ abstract class Resource extends NovaResource
      * @return array<int, int>|int|null
      */
     public static $perPageOptions = [5, 10, 15, 25, 50, 100];
+
+    /**
+     * Get the actions available for the resource.
+     */
+    public function actions(NovaRequest $request): array
+    {
+        return [
+            new ExportResources,
+        ];
+    }
+
     /**
      * Build an "index" query for the given resource.
      */

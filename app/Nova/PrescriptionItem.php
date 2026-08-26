@@ -38,9 +38,9 @@ class PrescriptionItem extends Resource
 
     public function actions(NovaRequest $request): array
     {
-        return [
+        return array_merge(parent::actions($request), [
             new BulkDispense,
-        ];
+        ]);
     }
 
     /**

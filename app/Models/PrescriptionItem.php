@@ -73,11 +73,23 @@ class PrescriptionItem extends Model
         $dispensed = $prescription->items()->where('dispensed', true)->count();
 
         if ($dispensed === $total) {
-            $prescription->update(['status' => 'dispensed']);
+            $prescription->update([
+                'status' => 'dispensed',
+                'dispensed_at' => $prescription->dispensed_at ?? now(),
+                'dispensed_by' => $prescription->dispensed_by ?? auth()->id(),
+            ]);
         } elseif ($dispensed > 0) {
-            $prescription->update(['status' => 'partially_dispensed']);
+            $prescription->update([
+                'status' => 'partially_dispensed',
+                'dispensed_at' => null,
+                'dispensed_by' => null,
+            ]);
         } else {
-            $prescription->update(['status' => 'pending']);
+            $prescription->update([
+                'status' => 'pending',
+                'dispensed_at' => null,
+                'dispensed_by' => null,
+            ]);
         }
     }
 

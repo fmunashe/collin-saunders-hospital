@@ -70,6 +70,7 @@ class Patient extends Resource
             HasMany::make('Admissions'),
             HasMany::make('Prescriptions'),
             HasMany::make('Invoices'),
+            HasMany::make('Referrals'),
         ];
     }
 

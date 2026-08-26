@@ -74,6 +74,11 @@ class Patient extends Model
         return $this->hasMany(Invoice::class);
     }
 
+    public function referrals(): HasMany
+    {
+        return $this->hasMany(Referral::class);
+    }
+
     public function getFullNameAttribute(): string
     {
         return "{$this->first_name} {$this->last_name}";
