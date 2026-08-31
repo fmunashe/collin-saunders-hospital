@@ -2,7 +2,6 @@
 
 namespace App\Nova\Actions;
 
-use App\Models\Medication;
 use App\Models\StockMovement;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\InteractsWithQueue;

@@ -1,58 +1,132 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Hospital Management System (HMS)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A comprehensive hospital management system built on Laravel + Nova, covering **Outpatient**, **Inpatient**, and **Pharmacy** operations with role-based access control, billing, and a full audit trail.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Modules
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Outpatient
+- Patient registration with auto-generated patient numbers (`PT00001`)
+- Visit/consultation tracking with status workflow (waiting → in progress → completed)
+- Doctor and department management
+- One-click invoice generation from a visit (consultation fee + dispensed medications)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Inpatient
+- Admissions with ward and bed assignment
+- **Automatic bed occupancy management** — beds are marked occupied on admission and freed on discharge/transfer
+- **Double-booking prevention** — a bed cannot be assigned to two admitted patients
+- Inpatient medication administration with stock deduction and audit
+- Inpatient/Outpatient status badge on patient records
 
-## Learning Laravel
+### Pharmacy
+- Medication catalogue with stock levels, reorder thresholds, and expiry dates
+- Prescriptions with line items and bulk dispensing
+- **Stock guards** — cannot dispense more than available stock or expired medication
+- Automatic prescription status sync (pending → partially dispensed → dispensed)
+- Full stock movement audit trail (received, dispensed, returned, adjustment)
+- Receive Stock, Stock Count Adjustment (bulk-capable) actions
+- Low-stock, out-of-stock, and expiry metrics & filters
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Billing
+- Invoices with auto-generated numbers (`INV-00001`)
+- **Line-item driven totals** — invoice totals are always the sum of items
+- **Automatic status** — derived from payments (pending / partially paid / paid)
+- Medical aid workflow states (submitted / rejected) preserved
+- PDF invoice download
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Cross-cutting
+- Referrals to external hospitals
+- Role-based access control (Spatie permissions) with per-resource policies
+- Audit log (Nova Action Events) exposed as a protected resource
+- CSV/Excel export on every resource
+- 2FA and passkey support
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+---
 
-## Agentic Development
+## Requirements
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+- PHP 8.3+
+- Composer
+- Node.js & npm
+- MySQL 8+ / PostgreSQL 14+ (SQLite for local/testing)
+- A valid Laravel Nova license
+
+---
+
+## Installation
 
 ```bash
-composer require laravel/boost --dev
+# Install dependencies
+composer install
+npm install && npm run build
 
-php artisan boost:install
+# Environment
+cp .env.example .env
+php artisan key:generate
+
+# Configure your database in .env, then:
+php artisan migrate --seed
+
+# Link storage (for invoice PDFs & exports)
+php artisan storage:link
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Seeded Accounts
 
-## Contributing
+| Email | Role | Access |
+|-------|------|--------|
+| `admin@hms.local` | admin | Full access |
+| `support@hms.local` | support_staff | Dashboard + user viewing |
+| `user@hms.local` | *(none)* | Restricted dashboard — prompts to contact administrator |
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Default password: `password`
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Configuration
 
-## Security Vulnerabilities
+Billing defaults and pharmacy settings live in `config/hms.php` (overridable via `.env`):
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| Env Variable | Purpose | Default |
+|--------------|---------|---------|
+| `HMS_CONSULTATION_FEE` | Default outpatient consultation fee | 350.00 |
+| `HMS_ADMISSION_FEE` | One-off admission fee | 500.00 |
+| `HMS_RATE_GENERAL` | General ward daily rate | 800.00 |
+| `HMS_RATE_ICU` | ICU daily rate | 3500.00 |
+| `HMS_EXPIRY_WARNING_DAYS` | Days before expiry to flag medication | 90 |
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Testing
+
+```bash
+php artisan test
+```
+
+Covers the critical business logic:
+- **Pharmacy** — stock deduction, reversal, over-dispensing prevention, expiry blocking, prescription status sync
+- **Inpatient** — bed occupancy, discharge freeing beds, double-booking prevention, bed reuse
+- **Billing** — invoice number generation, line-item totals, status derivation
+
+---
+
+## Key Business Rules (Automated)
+
+1. Dispensing a prescription item deducts medication stock and logs a movement; reversing it restores stock.
+2. Stock can never go negative and expired medication cannot be dispensed or administered.
+3. Admitting a patient occupies their bed; discharge/transfer/death frees it.
+4. A bed cannot be double-booked among admitted patients.
+5. Invoice totals are always the sum of line items; status follows payments.
+6. Patient numbers and invoice numbers are auto-generated and sequential.
+
+---
+
+## Tech Stack
+
+- **Framework:** Laravel 13
+- **Admin/UI:** Laravel Nova 5
+- **Auth/Permissions:** Laravel Fortify + Spatie Laravel Permission
+- **PDF:** laraveldaily/laravel-invoices (dompdf)
+- **Exports:** maatwebsite/excel
+- **Primary keys:** UUIDs throughout

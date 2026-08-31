@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Validation\ValidationException;
 
 class PrescriptionItem extends Model
 {
@@ -25,6 +26,21 @@ class PrescriptionItem extends Model
             // Deduct stock when item is marked as dispensed
             if ($item->isDirty('dispensed') && $item->dispensed && ! $item->getOriginal('dispensed')) {
                 $medication = $item->medication;
+
+                // Guard: prevent dispensing more than available stock
+                if ($medication->stock_quantity < $item->quantity) {
+                    throw ValidationException::withMessages([
+                        'dispensed' => "Insufficient stock for {$medication->name}. Available: {$medication->stock_quantity}, required: {$item->quantity}.",
+                    ]);
+                }
+
+                // Guard: prevent dispensing expired medication
+                if ($medication->isExpired()) {
+                    throw ValidationException::withMessages([
+                        'dispensed' => "{$medication->name} has expired (expiry: {$medication->expiry_date->format('d M Y')}) and cannot be dispensed.",
+                    ]);
+                }
+
                 $stockBefore = $medication->stock_quantity;
                 $medication->decrement('stock_quantity', $item->quantity);
 
@@ -35,7 +51,7 @@ class PrescriptionItem extends Model
                     'quantity' => -$item->quantity,
                     'stock_before' => $stockBefore,
                     'stock_after' => $stockBefore - $item->quantity,
-                    'reference' => 'Prescription #' . $item->prescription_id,
+                    'reference' => 'Prescription #'.$item->prescription_id,
                     'notes' => 'Dispensed via prescription',
                 ]);
             }
@@ -53,14 +69,14 @@ class PrescriptionItem extends Model
                     'quantity' => $item->quantity,
                     'stock_before' => $stockBefore,
                     'stock_after' => $stockBefore + $item->quantity,
-                    'reference' => 'Prescription #' . $item->prescription_id,
+                    'reference' => 'Prescription #'.$item->prescription_id,
                     'notes' => 'Dispensing reversed',
                 ]);
             }
         });
 
         static::updated(function (PrescriptionItem $item) {
-            if ($item->isDirty('dispensed')) {
+            if ($item->wasChanged('dispensed')) {
                 $item->syncPrescriptionStatus();
             }
         });

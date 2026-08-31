@@ -43,9 +43,21 @@ class Admission extends Resource
             ID::make()->sortable()->onlyOnDetail(),
             BelongsTo::make('Patient')->searchable()->rules('required'),
             BelongsTo::make('Doctor')->searchable()->rules('required'),
-            BelongsTo::make('Department')->rules('required'),
-            BelongsTo::make('Ward')->rules('required'),
-            BelongsTo::make('Bed')->nullable(),
+            BelongsTo::make('Department')->searchable()->rules('required'),
+            BelongsTo::make('Ward')->searchable()->rules('required'),
+            BelongsTo::make('Bed')->nullable()->searchable()->relatableQueryUsing(function (NovaRequest $request, $query) {
+                // Show only available beds, plus the bed already assigned to this admission
+                $query->where(function ($q) use ($request) {
+                    $q->where('status', 'available');
+
+                    if ($request->resourceId) {
+                        $admission = \App\Models\Admission::find($request->resourceId);
+                        if ($admission && $admission->bed_id) {
+                            $q->orWhere('id', $admission->bed_id);
+                        }
+                    }
+                });
+            }),
             DateTime::make('Admitted At')->rules('required')->sortable(),
             DateTime::make('Discharged At')->nullable(),
             Textarea::make('Reason for Admission')->rules('required'),

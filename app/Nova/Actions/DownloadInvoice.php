@@ -6,12 +6,12 @@ use App\Models\Invoice;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Collection;
-use LaravelDaily\Invoices\Classes\Buyer;
-use LaravelDaily\Invoices\Classes\InvoiceItem as InvoiceItemClass;
-use LaravelDaily\Invoices\Invoice as DailyInvoice;
 use Laravel\Nova\Actions\Action;
 use Laravel\Nova\Fields\ActionFields;
 use Laravel\Nova\Http\Requests\NovaRequest;
+use LaravelDaily\Invoices\Classes\Buyer;
+use LaravelDaily\Invoices\Classes\InvoiceItem as InvoiceItemClass;
+use LaravelDaily\Invoices\Invoice as DailyInvoice;
 
 class DownloadInvoice extends Action
 {
@@ -28,7 +28,7 @@ class DownloadInvoice extends Action
         $invoice->load(['patient', 'items']);
 
         $customer = new Buyer([
-            'name' => $invoice->patient->first_name . ' ' . $invoice->patient->last_name,
+            'name' => $invoice->patient->first_name.' '.$invoice->patient->last_name,
             'phone' => $invoice->patient->phone,
             'custom_fields' => [
                 'Patient Number' => $invoice->patient->patient_number,
@@ -53,9 +53,9 @@ class DownloadInvoice extends Action
             ->logo(public_path('images/logo.png'))
             ->save('public');
 
-        $url = asset('storage/' . $invoice->invoice_number . '.pdf');
+        $url = asset('storage/'.$invoice->invoice_number.'.pdf');
 
-        return Action::download($url, $invoice->invoice_number . '.pdf');
+        return Action::download($url, $invoice->invoice_number.'.pdf');
     }
 
     public function fields(NovaRequest $request): array

@@ -5,6 +5,7 @@ namespace App\Nova\Dashboards;
 use App\Nova\Metrics\AdmissionsPerDay;
 use App\Nova\Metrics\BedOccupancy;
 use App\Nova\Metrics\CurrentAdmissions;
+use App\Nova\Metrics\ExpiringMedications;
 use App\Nova\Metrics\InvoicesByStatus;
 use App\Nova\Metrics\LowStockMedications;
 use App\Nova\Metrics\NewPatientsPerDay;
@@ -55,7 +56,8 @@ class Main extends Dashboard
 
             // Row 5: Pharmacy & Prescriptions
             (new LowStockMedications)->width('1/4'),
-            (new PrescriptionsByStatus)->width('3/4'),
+            (new ExpiringMedications)->width('1/4'),
+            (new PrescriptionsByStatus)->width('1/2'),
 
             // Row 6: Revenue & Billing
             (new RevenuePerDay)->width('1/2'),

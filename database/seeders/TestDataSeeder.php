@@ -62,14 +62,12 @@ class TestDataSeeder extends Seeder
         }
 
         // --- Beds ---
+        // Beds start available; a few are set to maintenance. Occupancy is
+        // driven automatically by admissions (see Admission model events).
         $beds = collect();
         foreach ($wards as $ward) {
             for ($b = 1; $b <= min($ward->capacity, 6); $b++) {
-                $status = match (true) {
-                    $b <= 3 => 'available',
-                    $b <= 5 => 'occupied',
-                    default => 'maintenance',
-                };
+                $status = $b === 6 ? 'maintenance' : 'available';
                 $beds->push(Bed::create([
                     'ward_id' => $ward->id,
                     'bed_number' => strtoupper(substr($ward->name, 0, 2)) . '-' . str_pad($b, 2, '0', STR_PAD_LEFT),
@@ -221,9 +219,13 @@ class TestDataSeeder extends Seeder
             'Labour and delivery',
         ];
 
-        $occupiedBeds = $beds->filter(fn ($b) => $b->status->value === 'occupied');
-        foreach ($occupiedBeds->take(5) as $i => $bed) {
-            $patient = $patients->random();
+        // Admit 5 distinct patients to distinct available beds.
+        // The Admission model automatically marks each bed as occupied.
+        $availableBeds = $beds->filter(fn ($b) => $b->status->value === 'available')->values();
+        $admissionPatients = $patients->shuffle()->take(5)->values();
+
+        foreach ($admissionPatients as $i => $patient) {
+            $bed = $availableBeds[$i];
             $doctor = $doctors->random();
             $ward = $wards->firstWhere('id', $bed->ward_id);
             $admittedAt = Carbon::now()->subDays(rand(1, 10));
@@ -294,52 +296,47 @@ class TestDataSeeder extends Seeder
         }
 
         // --- Invoices ---
-        $invoiceNumber = 1;
         foreach ($completedVisits->take(10) as $visit) {
             $patient = $patients->firstWhere('id', $visit->patient_id);
-            $totalAmount = rand(150, 2500);
-            $status = collect(['pending', 'paid', 'paid', 'partially_paid'])->random();
-            $paidAmount = match ($status) {
-                'paid' => $totalAmount,
-                'partially_paid' => round($totalAmount * rand(30, 70) / 100, 2),
-                default => 0,
-            };
 
+            // Invoice number auto-generates; total is derived from items.
             $invoice = Invoice::create([
-                'invoice_number' => 'INV-' . str_pad($invoiceNumber++, 5, '0', STR_PAD_LEFT),
                 'patient_id' => $patient->id,
                 'visit_id' => $visit->id,
-                'total_amount' => $totalAmount,
-                'paid_amount' => $paidAmount,
                 'payment_method' => $patient->billing_type->value,
-                'status' => $status,
+                'paid_amount' => 0,
             ]);
 
-            // Add invoice items
+            // Add invoice items — the InvoiceItem model auto-calculates each
+            // line total and recalculates the parent invoice total.
             $items = [
                 ['description' => 'Consultation fee', 'tariff_code' => '0190', 'unit_price' => rand(250, 500)],
                 ['description' => 'Medication', 'tariff_code' => '0300', 'unit_price' => rand(50, 300)],
                 ['description' => 'Lab tests', 'tariff_code' => '3600', 'unit_price' => rand(100, 400)],
             ];
 
-            $runningTotal = 0;
             foreach (array_slice($items, 0, rand(1, 3)) as $item) {
-                $qty = 1;
-                $itemTotal = $item['unit_price'] * $qty;
-                $runningTotal += $itemTotal;
-
                 InvoiceItem::create([
                     'invoice_id' => $invoice->id,
                     'description' => $item['description'],
                     'tariff_code' => $item['tariff_code'],
-                    'quantity' => $qty,
+                    'quantity' => 1,
                     'unit_price' => $item['unit_price'],
-                    'total' => $itemTotal,
                 ]);
             }
 
-            // Update invoice total to match items
-            $invoice->update(['total_amount' => $runningTotal, 'paid_amount' => min($paidAmount, $runningTotal)]);
+            // Simulate a payment — the Invoice model derives the status.
+            $invoice->refresh();
+            $paymentScenario = collect(['unpaid', 'paid', 'paid', 'partial'])->random();
+            $paidAmount = match ($paymentScenario) {
+                'paid' => (float) $invoice->total_amount,
+                'partial' => round((float) $invoice->total_amount * rand(30, 70) / 100, 2),
+                default => 0,
+            };
+
+            if ($paidAmount > 0) {
+                $invoice->update(['paid_amount' => $paidAmount]);
+            }
         }
     }
 }

@@ -20,6 +20,18 @@ class InvoiceItem extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        // Always derive the line total from quantity × unit price
+        static::saving(function (InvoiceItem $item) {
+            $item->total = round((float) $item->unit_price * (int) $item->quantity, 2);
+        });
+
+        // Keep the parent invoice total in sync
+        static::saved(fn (InvoiceItem $item) => $item->invoice?->recalculateTotal());
+        static::deleted(fn (InvoiceItem $item) => $item->invoice?->recalculateTotal());
+    }
+
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);

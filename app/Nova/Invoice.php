@@ -34,15 +34,15 @@ class Invoice extends Resource
     {
         return [
             ID::make()->sortable()->onlyOnDetail(),
-            Text::make('Invoice Number')->sortable()->rules('required')->creationRules('unique:invoices,invoice_number')->updateRules('unique:invoices,invoice_number,{{resourceId}}'),
+            Text::make('Invoice Number')->sortable()->readonly()->hideWhenCreating(),
             BelongsTo::make('Patient')->searchable()->rules('required'),
-            BelongsTo::make('Visit')->nullable(),
-            BelongsTo::make('Admission')->nullable(),
-            Currency::make('Total Amount')->sortable()->rules('required'),
-            Currency::make('Paid Amount')->sortable()->default(0),
+            BelongsTo::make('Visit')->nullable()->searchable(),
+            BelongsTo::make('Admission')->nullable()->searchable(),
+            Currency::make('Total Amount')->sortable()->readonly()->help('Calculated automatically from invoice items.'),
+            Currency::make('Paid Amount')->sortable()->default(0)->rules('numeric', 'min:0'),
             Currency::make('Balance', fn () => $this->balance)->onlyOnDetail(),
             Select::make('Payment Method')->options(collect(BillingType::cases())->mapWithKeys(fn ($t) => [$t->value => str_replace('_', ' ', ucfirst($t->value))]))->rules('required')->searchable()->displayUsingLabels(),
-            Select::make('Status')->options(collect(InvoiceStatus::cases())->mapWithKeys(fn ($s) => [$s->value => str_replace('_', ' ', ucfirst($s->value))]))->default('pending')->rules('required')->searchable()->displayUsingLabels(),
+            Select::make('Status')->options(collect(InvoiceStatus::cases())->mapWithKeys(fn ($s) => [$s->value => str_replace('_', ' ', ucfirst($s->value))]))->default('pending')->rules('required')->searchable()->displayUsingLabels()->help('Auto-updates from payments. Manually set for medical aid submission/rejection.'),
             Textarea::make('Notes')->nullable()->hideFromIndex(),
             HasMany::make('Items', 'items', InvoiceItem::class),
         ];

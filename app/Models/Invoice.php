@@ -26,6 +26,38 @@ class Invoice extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::creating(function (Invoice $invoice) {
+            if (empty($invoice->invoice_number)) {
+                $invoice->invoice_number = static::generateInvoiceNumber();
+            }
+        });
+
+        // When the paid amount changes, refresh the status automatically
+        static::saving(function (Invoice $invoice) {
+            if ($invoice->isDirty('paid_amount')) {
+                $invoice->status = $invoice->determineStatus(
+                    (float) $invoice->total_amount,
+                    (float) $invoice->paid_amount
+                );
+            }
+        });
+    }
+
+    public static function generateInvoiceNumber(): string
+    {
+        $prefix = 'INV-';
+        $latest = static::withTrashed()
+            ->where('invoice_number', 'like', $prefix.'%')
+            ->orderBy('invoice_number', 'desc')
+            ->value('invoice_number');
+
+        $nextNumber = $latest ? (int) substr($latest, strlen($prefix)) + 1 : 1;
+
+        return $prefix.str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+    }
+
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
@@ -48,11 +80,45 @@ class Invoice extends Model
 
     public function getBalanceAttribute(): float
     {
-        return $this->total_amount - $this->paid_amount;
+        return (float) $this->total_amount - (float) $this->paid_amount;
     }
 
     public function isPaid(): bool
     {
         return $this->status === InvoiceStatus::Paid;
+    }
+
+    /**
+     * Recalculate the invoice total from its line items and refresh the payment status.
+     */
+    public function recalculateTotal(): void
+    {
+        $total = (float) $this->items()->sum('total');
+
+        $this->forceFill([
+            'total_amount' => $total,
+            'status' => $this->determineStatus($total, (float) $this->paid_amount),
+        ])->saveQuietly();
+    }
+
+    /**
+     * Derive the invoice status from amounts, preserving medical-aid workflow states.
+     */
+    public function determineStatus(float $total, float $paid): InvoiceStatus
+    {
+        // Preserve manual medical-aid workflow states
+        if (in_array($this->status, [InvoiceStatus::SubmittedToMedicalAid, InvoiceStatus::Rejected], true)) {
+            return $this->status;
+        }
+
+        if ($paid <= 0) {
+            return InvoiceStatus::Pending;
+        }
+
+        if ($paid >= $total && $total > 0) {
+            return InvoiceStatus::Paid;
+        }
+
+        return InvoiceStatus::PartiallyPaid;
     }
 }

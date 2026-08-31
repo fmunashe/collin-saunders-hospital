@@ -44,6 +44,10 @@ class AdministerMedication extends Action
             return Action::danger("{$medication->name} is out of stock.");
         }
 
+        if ($medication->isExpired()) {
+            return Action::danger("{$medication->name} has expired and cannot be administered.");
+        }
+
         // Record the administration
         MedicationAdministration::create([
             'admission_id' => $admission->id,
@@ -67,7 +71,7 @@ class AdministerMedication extends Action
             'quantity' => -1,
             'stock_before' => $stockBefore,
             'stock_after' => $stockBefore - 1,
-            'reference' => 'Admission #' . $admission->id,
+            'reference' => 'Admission #'.$admission->id,
             'notes' => "Administered to patient: {$fields->get('dosage')} via {$fields->get('route')}",
         ]);
 

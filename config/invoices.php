@@ -32,16 +32,16 @@ return [
     ],
 
     'currency' => [
-        'code' => 'ZAR',
+        'code' => 'USD',
 
         /*
          * Usually cents
          * Used when spelling out the amount and if your currency has decimals.
          *
-         * Example: Amount in words: Eight hundred fifty thousand sixty-eight EUR and fifteen ct.
+         * Example: Amount in words: Eight hundred fifty thousand sixty-eight USD and fifteen cents.
          */
         'fraction' => 'cents',
-        'symbol'   => 'R',
+        'symbol'   => '$',
 
         /*
          * Example: 19.00
@@ -57,11 +57,11 @@ return [
          * By default empty.
          * Example: 1,999.00
          */
-        'thousands_separator' => ' ',
+        'thousands_separator' => ',',
 
         /*
          * Supported tags {VALUE}, {SYMBOL}, {CODE}
-         * Example: 1.99 €
+         * Example: $1.99
          */
         'format' => '{SYMBOL}{VALUE}',
     ],

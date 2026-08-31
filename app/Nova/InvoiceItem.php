@@ -24,12 +24,12 @@ class InvoiceItem extends Resource
     {
         return [
             ID::make()->sortable()->onlyOnDetail(),
-            BelongsTo::make('Invoice'),
+            BelongsTo::make('Invoice')->searchable(),
             Text::make('Description')->rules('required', 'max:255'),
             Text::make('Tariff Code')->nullable(),
             Number::make('Quantity')->rules('required', 'integer', 'min:1')->default(1),
-            Currency::make('Unit Price')->rules('required'),
-            Currency::make('Total')->rules('required'),
+            Currency::make('Unit Price')->rules('required', 'numeric', 'min:0'),
+            Currency::make('Total')->exceptOnForms()->help('Calculated automatically (quantity × unit price).'),
         ];
     }
 

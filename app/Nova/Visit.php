@@ -3,6 +3,7 @@
 namespace App\Nova;
 
 use App\Enums\VisitStatus;
+use App\Nova\Actions\GenerateVisitInvoice;
 use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Fields\DateTime;
 use Laravel\Nova\Fields\HasMany;
@@ -52,6 +53,13 @@ class Visit extends Resource
             HasMany::make('Prescriptions'),
             HasOne::make('Invoice'),
         ];
+    }
+
+    public function actions(NovaRequest $request): array
+    {
+        return array_merge(parent::actions($request), [
+            (new GenerateVisitInvoice)->showInline()->canRun(fn ($request, $visit) => $visit->invoice === null),
+        ]);
     }
 
     /**

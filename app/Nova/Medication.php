@@ -4,10 +4,13 @@ namespace App\Nova;
 
 use App\Nova\Actions\AdjustStock;
 use App\Nova\Actions\ReceiveStock;
+use App\Nova\Filters\MedicationExpiryStatus;
 use App\Nova\Filters\MedicationStockStatus;
+use App\Nova\Metrics\ExpiringMedications;
 use App\Nova\Metrics\LowStockMedications;
 use App\Nova\Metrics\OutOfStockMedications;
 use App\Nova\Metrics\TotalMedications;
+use Laravel\Nova\Fields\Badge;
 use Laravel\Nova\Fields\Boolean;
 use Laravel\Nova\Fields\Currency;
 use Laravel\Nova\Fields\Date;
@@ -36,9 +39,20 @@ class Medication extends Resource
             Text::make('Strength')->rules('required', 'max:100'),
             Number::make('Stock Quantity')->sortable()->rules('required', 'integer', 'min:0'),
             Number::make('Reorder Level')->rules('required', 'integer', 'min:0')->hideFromIndex(),
-            Currency::make('Unit Price')->rules('required'),
+            Currency::make('Unit Price')->rules('required', 'numeric', 'min:0'),
             Date::make('Expiry Date')->nullable()->sortable(),
             Boolean::make('Active', 'is_active')->default(true),
+            Badge::make('Stock', fn () => $this->stockStatusLabel())->map([
+                'In Stock' => 'success',
+                'Low Stock' => 'warning',
+                'Out of Stock' => 'danger',
+            ])->exceptOnForms(),
+            Badge::make('Expiry', fn () => $this->expiryStatusLabel())->map([
+                'Valid' => 'success',
+                'No Expiry' => 'info',
+                'Expiring Soon' => 'warning',
+                'Expired' => 'danger',
+            ])->exceptOnForms(),
             HasMany::make('Stock Movements', 'stockMovements', StockMovement::class),
         ];
     }
@@ -46,9 +60,10 @@ class Medication extends Resource
     public function cards(NovaRequest $request): array
     {
         return [
-            (new TotalMedications)->width('1/3'),
-            (new LowStockMedications)->width('1/3'),
-            (new OutOfStockMedications)->width('1/3'),
+            (new TotalMedications)->width('1/4'),
+            (new LowStockMedications)->width('1/4'),
+            (new OutOfStockMedications)->width('1/4'),
+            (new ExpiringMedications)->width('1/4'),
         ];
     }
 
@@ -56,6 +71,7 @@ class Medication extends Resource
     {
         return [
             new MedicationStockStatus,
+            new MedicationExpiryStatus,
         ];
     }
 

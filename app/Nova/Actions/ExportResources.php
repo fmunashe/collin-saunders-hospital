@@ -34,7 +34,8 @@ class ExportResources extends Action
 
         $headings = $data->isNotEmpty() ? array_keys($data->first()) : [];
 
-        $export = new class($data, $headings) implements FromCollection, WithHeadings {
+        $export = new class($data, $headings) implements FromCollection, WithHeadings
+        {
             public function __construct(
                 private Collection $data,
                 private array $headings,

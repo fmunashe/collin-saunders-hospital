@@ -51,6 +51,23 @@ class RolesAndPermissionsSeeder extends Seeder
             }
         }
 
+        // Report view permissions (one per report dashboard)
+        $reports = [
+            'patient-reports',
+            'outpatient-reports',
+            'inpatient-reports',
+            'pharmacy-reports',
+            'financial-reports',
+            'referral-reports',
+            'staff-reports',
+        ];
+
+        foreach ($reports as $report) {
+            $permissionName = "view-{$report}";
+            Permission::firstOrCreate(['name' => $permissionName, 'guard_name' => 'web']);
+            $allPermissions[] = $permissionName;
+        }
+
         // Create roles
         $admin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
         $doctor = Role::firstOrCreate(['name' => 'doctor', 'guard_name' => 'web']);
@@ -78,6 +95,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'bed-access', 'bed-show',
             'staff-access', 'staff-show',
             'referral-access', 'referral-show', 'referral-create', 'referral-update',
+            'view-patient-reports', 'view-outpatient-reports', 'view-inpatient-reports', 'view-referral-reports',
         ]);
 
         // Nurse permissions
@@ -91,6 +109,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'department-access', 'department-show',
             'staff-access', 'staff-show',
             'medication-administration-access', 'medication-administration-show', 'medication-administration-create', 'medication-administration-update',
+            'view-inpatient-reports', 'view-patient-reports',
         ]);
 
         // Pharmacist permissions
@@ -100,6 +119,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'prescription-item-access', 'prescription-item-show', 'prescription-item-update',
             'patient-access', 'patient-show',
             'stock-movement-access', 'stock-movement-show',
+            'view-pharmacy-reports',
         ]);
 
         // Receptionist permissions
@@ -112,6 +132,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'department-access', 'department-show',
             'doctor-access', 'doctor-show',
             'staff-access', 'staff-show',
+            'view-patient-reports', 'view-outpatient-reports',
         ]);
 
         // Billing permissions
@@ -123,6 +144,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'admission-access', 'admission-show',
             'medical-aid-scheme-access', 'medical-aid-scheme-show',
             'medical-aid-detail-access', 'medical-aid-detail-show',
+            'view-financial-reports',
         ]);
 
         // Lab Technician permissions

@@ -7,6 +7,7 @@ use App\Models\StockMovement;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Laravel\Nova\Actions\Action;
 use Laravel\Nova\Fields\ActionFields;
 use Laravel\Nova\Http\Requests\NovaRequest;
@@ -23,10 +24,13 @@ class BulkDispense extends Action
         $skipped = 0;
         $outOfStock = [];
 
+        $expired = [];
+
         foreach ($models as $item) {
             // Skip already dispensed items
             if ($item->dispensed) {
                 $skipped++;
+
                 continue;
             }
 
@@ -35,25 +39,35 @@ class BulkDispense extends Action
             // Check stock
             if ($medication->stock_quantity < $item->quantity) {
                 $outOfStock[] = $medication->name;
+
                 continue;
             }
 
-            // Mark as dispensed
-            $stockBefore = $medication->stock_quantity;
-            $medication->decrement('stock_quantity', $item->quantity);
+            // Check expiry
+            if ($medication->isExpired()) {
+                $expired[] = $medication->name;
 
-            StockMovement::create([
-                'medication_id' => $medication->id,
-                'user_id' => auth()->id(),
-                'type' => 'dispensed',
-                'quantity' => -$item->quantity,
-                'stock_before' => $stockBefore,
-                'stock_after' => $stockBefore - $item->quantity,
-                'reference' => 'Prescription #' . $item->prescription_id,
-                'notes' => 'Bulk dispensed via pharmacy',
-            ]);
+                continue;
+            }
 
-            $item->updateQuietly(['dispensed' => true]);
+            DB::transaction(function () use ($item, $medication) {
+                $stockBefore = $medication->stock_quantity;
+                $medication->decrement('stock_quantity', $item->quantity);
+
+                StockMovement::create([
+                    'medication_id' => $medication->id,
+                    'user_id' => auth()->id(),
+                    'type' => 'dispensed',
+                    'quantity' => -$item->quantity,
+                    'stock_before' => $stockBefore,
+                    'stock_after' => $stockBefore - $item->quantity,
+                    'reference' => 'Prescription #'.$item->prescription_id,
+                    'notes' => 'Bulk dispensed via pharmacy',
+                ]);
+
+                $item->updateQuietly(['dispensed' => true]);
+            });
+
             $dispensed++;
         }
 
@@ -65,7 +79,10 @@ class BulkDispense extends Action
             $messages[] = "{$skipped} already dispensed";
         }
         if (count($outOfStock) > 0) {
-            $messages[] = "Insufficient stock: " . implode(', ', $outOfStock);
+            $messages[] = 'Insufficient stock: '.implode(', ', $outOfStock);
+        }
+        if (count($expired) > 0) {
+            $messages[] = 'Expired (not dispensed): '.implode(', ', $expired);
         }
 
         // Sync prescription statuses for affected prescriptions
@@ -74,9 +91,9 @@ class BulkDispense extends Action
             $item?->syncPrescriptionStatus();
         });
 
-        $message = implode('. ', $messages) . '.';
+        $message = implode('. ', $messages).'.';
 
-        if (count($outOfStock) > 0) {
+        if (count($outOfStock) > 0 || count($expired) > 0) {
             return Action::danger($message);
         }
 

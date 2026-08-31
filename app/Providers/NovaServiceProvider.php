@@ -5,7 +5,14 @@ namespace App\Providers;
 use App\Nova\ActionEvent;
 use App\Nova\Admission;
 use App\Nova\Bed;
+use App\Nova\Dashboards\FinancialReports;
+use App\Nova\Dashboards\InpatientReports;
 use App\Nova\Dashboards\Main;
+use App\Nova\Dashboards\OutpatientReports;
+use App\Nova\Dashboards\PatientReports;
+use App\Nova\Dashboards\PharmacyReports;
+use App\Nova\Dashboards\ReferralReports;
+use App\Nova\Dashboards\StaffReports;
 use App\Nova\Doctor;
 use App\Nova\Invoice;
 use App\Nova\MedicalAidScheme;
@@ -21,15 +28,18 @@ use App\Nova\StockMovement;
 use App\Nova\User;
 use App\Nova\Visit;
 use App\Nova\Ward;
+use App\SupportPage\SupportPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Fortify\Features;
+use Laravel\Nova\Dashboard;
 use Laravel\Nova\Menu\MenuGroup;
 use Laravel\Nova\Menu\MenuItem;
 use Laravel\Nova\Menu\MenuSection;
 use Laravel\Nova\Nova;
 use Laravel\Nova\NovaApplicationServiceProvider;
+use Laravel\Nova\Tool;
 
 class NovaServiceProvider extends NovaApplicationServiceProvider
 {
@@ -57,7 +67,7 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
             </div>
 
             <div>
-                © ' . now()->year . '
+                © '.now()->year.'
             </div>
         </div>
             ');
@@ -95,7 +105,7 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
                     MenuGroup::make('Configs', [
                         MenuItem::resource(Ward::class)->icon('wrench-screwdriver'),
                         MenuItem::resource(Bed::class)->icon('wrench'),
-                    ])
+                    ]),
                 ])->icon('cog')->collapsable(),
 
                 MenuSection::make('Patients', [
@@ -106,7 +116,7 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
                         MenuItem::resource(Referral::class)->icon('arrow-top-right-on-square'),
                         MenuItem::resource(Invoice::class)->icon('banknotes'),
                         MenuItem::resource(MedicationAdministration::class)->icon('light-bulb'),
-                    ])
+                    ]),
                 ])->icon('identification')->collapsable(),
 
                 MenuSection::make('Pharmacy', [
@@ -116,12 +126,46 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
                         MenuItem::resource(Prescription::class)->icon('eye-dropper'),
                         MenuItem::resource(MedicalAidScheme::class)->icon('bolt'),
                         MenuItem::resource(StockMovement::class)->icon('scale'),
-                    ])
+                    ]),
                 ])->icon('beaker')->collapsable(),
+
+                MenuSection::make('Reports', [
+                    MenuGroup::make('View', [
+                        MenuItem::dashboard(PatientReports::class)->name('Patient')
+                            ->canSee(fn ($r) => $r->user()?->can('view-patient-reports'))->icon('identification'),
+                        MenuItem::dashboard(OutpatientReports::class)->name('Outpatient')
+                            ->canSee(fn ($r) => $r->user()?->can('view-outpatient-reports'))->icon('circle-stack'),
+                        MenuItem::dashboard(InpatientReports::class)->name('Inpatient')
+                            ->canSee(fn ($r) => $r->user()?->can('view-inpatient-reports'))->icon('table-cells'),
+                        MenuItem::dashboard(PharmacyReports::class)->name('Pharmacy')
+                            ->canSee(fn ($r) => $r->user()?->can('view-pharmacy-reports'))->icon('beaker'),
+                        MenuItem::dashboard(FinancialReports::class)->name('Financial')
+                            ->canSee(fn ($r) => $r->user()?->can('view-financial-reports'))->icon('banknotes'),
+                        MenuItem::dashboard(ReferralReports::class)->name('Referral')
+                            ->canSee(fn ($r) => $r->user()?->can('view-referral-reports'))->icon('light-bulb'),
+                        MenuItem::dashboard(StaffReports::class)->name('Staff')
+                            ->canSee(fn ($r) => $r->user()?->can('view-staff-reports'))->icon('user-group'),
+                    ])->collapsedByDefault(),
+                    MenuGroup::make('Download PDF', [
+                        MenuItem::externalLink('Patient', url('/nova/reports/patient-reports/pdf'))->openInNewTab()
+                            ->canSee(fn ($r) => $r->user()?->can('view-patient-reports'))->icon('document-arrow-down'),
+                        MenuItem::externalLink('Outpatient', url('/nova/reports/outpatient-reports/pdf'))->openInNewTab()
+                            ->canSee(fn ($r) => $r->user()?->can('view-outpatient-reports'))->icon('document-arrow-down'),
+                        MenuItem::externalLink('Inpatient', url('/nova/reports/inpatient-reports/pdf'))->openInNewTab()
+                            ->canSee(fn ($r) => $r->user()?->can('view-inpatient-reports'))->icon('document-arrow-down'),
+                        MenuItem::externalLink('Pharmacy', url('/nova/reports/pharmacy-reports/pdf'))->openInNewTab()
+                            ->canSee(fn ($r) => $r->user()?->can('view-pharmacy-reports'))->icon('document-arrow-down'),
+                        MenuItem::externalLink('Financial', url('/nova/reports/financial-reports/pdf'))->openInNewTab()
+                            ->canSee(fn ($r) => $r->user()?->can('view-financial-reports'))->icon('document-arrow-down'),
+                        MenuItem::externalLink('Referral', url('/nova/reports/referral-reports/pdf'))->openInNewTab()
+                            ->canSee(fn ($r) => $r->user()?->can('view-referral-reports'))->icon('document-arrow-down'),
+                        MenuItem::externalLink('Staff', url('/nova/reports/staff-reports/pdf'))->openInNewTab()
+                            ->canSee(fn ($r) => $r->user()?->can('view-staff-reports'))->icon('document-arrow-down'),
+                    ])->collapsable()->collapsedByDefault(),
+                ])->icon('chart-bar')->collapsable(),
             ];
         });
     }
-
 
     /**
      * Register the configurations for Laravel Fortify.
@@ -165,24 +209,31 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
     /**
      * Get the dashboards that should be listed in the Nova sidebar.
      *
-     * @return array<int, \Laravel\Nova\Dashboard>
+     * @return array<int, Dashboard>
      */
     protected function dashboards(): array
     {
         return [
-            new \App\Nova\Dashboards\Main,
+            new Main,
+            new PatientReports,
+            new OutpatientReports,
+            new InpatientReports,
+            new PharmacyReports,
+            new FinancialReports,
+            new ReferralReports,
+            new StaffReports,
         ];
     }
 
     /**
      * Get the tools that should be listed in the Nova sidebar.
      *
-     * @return array<int, \Laravel\Nova\Tool>
+     * @return array<int, Tool>
      */
     public function tools(): array
     {
         return [
-            new \App\SupportPage\SupportPage,
+            new SupportPage,
         ];
     }
 

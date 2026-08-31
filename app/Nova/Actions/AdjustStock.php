@@ -2,7 +2,6 @@
 
 namespace App\Nova\Actions;
 
-use App\Models\Medication;
 use App\Models\StockMovement;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -52,7 +51,7 @@ class AdjustStock extends Action
         if ($count === 1) {
             $medication = $models->first();
             $stockBefore = $medication->getOriginal('stock_quantity') ?? $actualCount;
-            $direction = ($actualCount - $stockBefore) >= 0 ? '+' . ($actualCount - $stockBefore) : (string) ($actualCount - $stockBefore);
+            $direction = ($actualCount - $stockBefore) >= 0 ? '+'.($actualCount - $stockBefore) : (string) ($actualCount - $stockBefore);
 
             return Action::message("{$processed[0]}: stock set to {$actualCount}.");
         }
