@@ -4,12 +4,20 @@
     <meta charset="utf-8">
     <title>{{ $title }}</title>
     <style>
-        @page { margin: 30px; }
+        @page { margin: 40px; }
         * { font-family: DejaVu Sans, sans-serif; }
-        html {
-            border: 1px dotted #9ca3af;
+        body { color: #1f2937; font-size: 12px; margin: 0; }
+        /* Page frame: fixed elements repeat on every page in dompdf */
+        .page-border {
+            position: fixed;
+            top: -20px;
+            left: -20px;
+            right: -20px;
+            bottom: -20px;
+            border: 1px dotted #6b7280;
+            z-index: -1;
         }
-        body { color: #1f2937; font-size: 12px; margin: 0; padding: 18px; }
+        .content { padding: 4px; }
         .header {
             border-bottom: 3px solid #006838;
             padding-bottom: 12px;
@@ -43,7 +51,7 @@
         .empty { color: #9ca3af; font-style: italic; padding: 8px 10px; }
         .footer {
             position: fixed;
-            bottom: -20px;
+            bottom: -8px;
             left: 0;
             right: 0;
             text-align: center;
@@ -53,6 +61,9 @@
     </style>
 </head>
 <body>
+    <div class="page-border"></div>
+
+    <div class="content">
     <div class="header">
         <h1>Collin Saunders Hospital</h1>
         <div style="font-size: 15px; font-weight: bold;">{{ $title }}</div>
@@ -102,6 +113,8 @@
     @empty
         <div class="empty">No report data available.</div>
     @endforelse
+
+    </div>
 
     <div class="footer">
         Confidential — Hospital Management System &copy; {{ $generatedAt->year }}
