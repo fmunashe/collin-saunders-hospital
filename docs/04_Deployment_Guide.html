@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HMS — Deployment Guide</title>
+<link rel="stylesheet" href="assets/hms-theme.css">
+</head>
+<body>
+<div class="masthead">
+    <div class="logo-mark">
+        <div class="cross"></div>
+        <div class="brand-name">HMS · Collin Saunders Hospital</div>
+    </div>
+    <h1>Deployment Guide</h1>
+    <p class="subtitle">Server Specs · Nginx · PHP-FPM · Redis · Supervisor · Horizon</p>
+    <div class="accent-bar"></div>
+    <div class="meta">
+        <span><strong>Version:</strong> 1.0</span>
+        <span><strong>Date:</strong> 31 August 2026</span>
+        <span><strong>Target OS:</strong> Ubuntu 22.04/24.04 LTS</span>
+    </div>
+</div>
+
+<div class="doc">
+
+<div class="toc">
+    <h3>Contents</h3>
+    <ol>
+        <li>Server Specifications</li>
+        <li>Software Prerequisites</li>
+        <li>OS &amp; Package Setup</li>
+        <li>Application Deployment</li>
+        <li>Environment Configuration</li>
+        <li>Nginx Configuration</li>
+        <li>PHP-FPM Tuning</li>
+        <li>Redis Configuration</li>
+        <li>Queue Workers &amp; Horizon</li>
+        <li>Supervisor Configuration</li>
+        <li>Scheduler (Cron)</li>
+        <li>TLS / SSL</li>
+        <li>Backups &amp; Maintenance</li>
+        <li>Deploy &amp; Release Checklist</li>
+    </ol>
+</div>
+
+<h2><span class="num">1</span>Server Specifications</h2>
+<p>Recommended Linux server specifications, sized for the on-premise hospital deployment.</p>
+<table>
+    <thead><tr><th>Tier</th><th>Users</th><th>vCPU</th><th>RAM</th><th>Storage</th><th>Notes</th></tr></thead>
+    <tbody>
+        <tr><td>Minimum</td><td>up to 25 concurrent</td><td>4 vCPU</td><td>8 GB</td><td>80 GB SSD</td><td>Single node, all services</td></tr>
+        <tr><td><strong>Recommended</strong></td><td>up to 100 concurrent</td><td>8 vCPU</td><td>16 GB</td><td>160 GB SSD</td><td>Single node, all services</td></tr>
+        <tr><td>Growth (2-node)</td><td>100+ concurrent</td><td>8+8 vCPU</td><td>16+16 GB</td><td>160 GB + 250 GB SSD</td><td>App node + Data node</td></tr>
+    </tbody>
+</table>
+<div class="callout info">
+    <strong>Operating system:</strong> Ubuntu Server 22.04 or 24.04 LTS (64-bit). Storage should be SSD/NVMe. Provision a separate backup volume or off-server backup target. A UPS is strongly recommended for on-premise hospital servers.
+</div>
+
+<h2><span class="num">2</span>Software Prerequisites</h2>
+<table>
+    <thead><tr><th>Component</th><th>Version</th></tr></thead>
+    <tbody>
+        <tr><td>PHP (with FPM)</td><td>8.3+</td></tr>
+        <tr><td>PHP extensions</td><td>bcmath, ctype, curl, dom, fileinfo, gd, intl, mbstring, openssl, pdo, pdo_mysql (or pdo_pgsql), redis, tokenizer, xml, zip</td></tr>
+        <tr><td>Composer</td><td>2.x</td></tr>
+        <tr><td>Node.js + npm</td><td>20 LTS</td></tr>
+        <tr><td>Database</td><td>MySQL 8.0+ or PostgreSQL 14+</td></tr>
+        <tr><td>Redis</td><td>7.x</td></tr>
+        <tr><td>Nginx</td><td>1.24+</td></tr>
+        <tr><td>Supervisor</td><td>4.x</td></tr>
+    </tbody>
+</table>
+
+<h2><span class="num">3</span>OS &amp; Package Setup</h2>
+<pre><code># Update system
+sudo apt update &amp;&amp; sudo apt upgrade -y
+
+# PHP 8.3 + extensions
+sudo add-apt-repository ppa:ondrej/php -y
+sudo apt update
+sudo apt install -y php8.3-fpm php8.3-cli php8.3-bcmath php8.3-curl \
+  php8.3-dom php8.3-gd php8.3-intl php8.3-mbstring php8.3-mysql \
+  php8.3-pgsql php8.3-redis php8.3-xml php8.3-zip
+
+# Nginx, Redis, Supervisor
+sudo apt install -y nginx redis-server supervisor
+
+# Database (choose one)
+sudo apt install -y mysql-server        # OR
+sudo apt install -y postgresql
+
+# Composer
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+
+# Node.js 20 LTS
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs</code></pre>
+
+<h2><span class="num">4</span>Application Deployment</h2>
+<pre><code># Deploy location
+cd /var/www
+sudo git clone &lt;repository-url&gt; hms
+sudo chown -R www-data:www-data hms
+cd hms
+
+# Backend dependencies (production)
+composer install --no-dev --optimize-autoloader
+
+# Frontend build
+npm ci &amp;&amp; npm run build
+
+# App key &amp; storage
+cp .env.example .env
+php artisan key:generate
+php artisan storage:link
+
+# Database
+php artisan migrate --force
+php artisan db:seed --class=RolesAndPermissionsSeeder --force
+
+# Cache config, routes, views, events
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan event:cache
+
+# Nova assets
+php artisan nova:publish
+
+# Permissions
+sudo chown -R www-data:www-data storage bootstrap/cache
+sudo chmod -R 775 storage bootstrap/cache</code></pre>
+
+<h2><span class="num">5</span>Environment Configuration</h2>
+<p>Key <code>.env</code> settings for production:</p>
+<pre><code>APP_NAME="Collin Saunders HMS"
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://hms.hospital.local
+
+# Database
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=hms
+DB_USERNAME=hms_user
+DB_PASSWORD=&lt;strong-password&gt;
+
+# Redis-backed cache, session, queue
+CACHE_STORE=redis
+SESSION_DRIVER=redis
+QUEUE_CONNECTION=redis
+REDIS_CLIENT=phpredis
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+REDIS_PASSWORD=&lt;redis-password&gt;
+
+# Nova license
+NOVA_LICENSE_KEY=&lt;your-nova-key&gt;
+
+# HMS billing defaults (USD)
+HMS_CONSULTATION_FEE=350
+HMS_ADMISSION_FEE=500
+HMS_EXPIRY_WARNING_DAYS=90
+
+# Mail (for notifications)
+MAIL_MAILER=smtp
+MAIL_HOST=&lt;smtp-host&gt;
+MAIL_PORT=587
+MAIL_USERNAME=&lt;user&gt;
+MAIL_PASSWORD=&lt;pass&gt;</code></pre>
+
+<h2><span class="num">6</span>Nginx Configuration</h2>
+<p>Create <code>/etc/nginx/sites-available/hms</code>:</p>
+<pre><code>server {
+    listen 80;
+    server_name hms.hospital.local;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name hms.hospital.local;
+    root /var/www/hms/public;
+
+    ssl_certificate     /etc/ssl/hms/fullchain.pem;
+    ssl_certificate_key /etc/ssl/hms/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+    add_header Strict-Transport-Security "max-age=31536000" always;
+
+    index index.php;
+    charset utf-8;
+    client_max_body_size 25M;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+
+    error_page 404 /index.php;
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+        fastcgi_read_timeout 120;
+    }
+
+    location ~ /\.(?!well-known).* { deny all; }
+}</code></pre>
+<pre><code>sudo ln -s /etc/nginx/sites-available/hms /etc/nginx/sites-enabled/
+sudo nginx -t &amp;&amp; sudo systemctl reload nginx</code></pre>
+
+<h2><span class="num">7</span>PHP-FPM Tuning</h2>
+<p>Edit <code>/etc/php/8.3/fpm/pool.d/www.conf</code> — size the pool to server RAM (≈ 50 MB per worker):</p>
+<pre><code>pm = dynamic
+pm.max_children = 40        ; ~2GB reserved for FPM on 16GB box
+pm.start_servers = 8
+pm.min_spare_servers = 6
+pm.max_spare_servers = 12
+pm.max_requests = 500</code></pre>
+<p>And <code>/etc/php/8.3/fpm/php.ini</code>:</p>
+<pre><code>memory_limit = 256M
+upload_max_filesize = 25M
+post_max_size = 25M
+max_execution_time = 120
+opcache.enable = 1
+opcache.memory_consumption = 256
+opcache.max_accelerated_files = 20000
+opcache.validate_timestamps = 0   ; production: rely on deploy cache clears</code></pre>
+<pre><code>sudo systemctl restart php8.3-fpm</code></pre>
+
+<h2><span class="num">8</span>Redis Configuration</h2>
+<p>Edit <code>/etc/redis/redis.conf</code>:</p>
+<pre><code>maxmemory 2gb
+maxmemory-policy allkeys-lru
+requirepass &lt;redis-password&gt;
+appendonly yes            ; durability for queued jobs
+supervised systemd</code></pre>
+<pre><code>sudo systemctl enable redis-server
+sudo systemctl restart redis-server</code></pre>
+<div class="callout warn">
+    <strong>Note:</strong> Use <code>allkeys-lru</code> only if Redis is shared for cache. If queue durability is critical, run a second Redis instance (or logical separation) for queues with <code>noeviction</code> so jobs are never dropped.
+</div>
+
+<h2><span class="num">9</span>Queue Workers &amp; Horizon</h2>
+<p>Horizon manages Redis queue workers with auto-balancing and a metrics dashboard at <code>/horizon</code>. Install &amp; publish:</p>
+<pre><code>composer require laravel/horizon
+php artisan horizon:install
+php artisan config:cache</code></pre>
+<p>Configure worker balancing in <code>config/horizon.php</code>:</p>
+<pre><code>'environments' =&gt; [
+    'production' =&gt; [
+        'supervisor-1' =&gt; [
+            'connection' =&gt; 'redis',
+            'queue' =&gt; ['default'],
+            'balance' =&gt; 'auto',
+            'minProcesses' =&gt; 1,
+            'maxProcesses' =&gt; 10,
+            'balanceMaxShift' =&gt; 1,
+            'balanceCooldown' =&gt; 3,
+            'tries' =&gt; 3,
+            'timeout' =&gt; 120,
+        ],
+    ],
+],</code></pre>
+<div class="callout info">
+    <strong>Horizon access:</strong> restrict the <code>/horizon</code> dashboard via the <code>HorizonServiceProvider</code> gate to admin users only.
+</div>
+
+<h2><span class="num">10</span>Supervisor Configuration</h2>
+<p>Supervisor keeps Horizon (and thus all workers) running and restarts it on failure or deploy. Create <code>/etc/supervisor/conf.d/hms-horizon.conf</code>:</p>
+<pre><code>[program:hms-horizon]
+process_name=%(program_name)s
+command=php /var/www/hms/artisan horizon
+autostart=true
+autorestart=true
+user=www-data
+redirect_stderr=true
+stdout_logfile=/var/www/hms/storage/logs/horizon.log
+stopwaitsecs=3600</code></pre>
+<pre><code>sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start hms-horizon</code></pre>
+<p>On each deploy, gracefully restart workers so they pick up new code:</p>
+<pre><code>php artisan horizon:terminate   # Supervisor auto-restarts Horizon</code></pre>
+
+<h2><span class="num">11</span>Scheduler (Cron)</h2>
+<p>Add the Laravel scheduler to <code>www-data</code>'s crontab for daily backups, expiry checks, and low-stock alerts:</p>
+<pre><code>sudo crontab -u www-data -e
+
+# add:
+* * * * * cd /var/www/hms &amp;&amp; php artisan schedule:run &gt;&gt; /dev/null 2&gt;&amp;1</code></pre>
+
+<h2><span class="num">12</span>TLS / SSL</h2>
+<p>For an internet-facing host use Let's Encrypt; for an internal LAN host use an internal CA or a self-signed certificate distributed to workstations.</p>
+<pre><code># Let's Encrypt (internet-facing)
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d hms.hospital.local</code></pre>
+
+<h2><span class="num">13</span>Backups &amp; Maintenance</h2>
+<table>
+    <thead><tr><th>Task</th><th>Frequency</th><th>Method</th></tr></thead>
+    <tbody>
+        <tr><td>Database backup</td><td>Nightly</td><td><code>mysqldump</code> / <code>pg_dump</code> to backup volume, 30-day retention</td></tr>
+        <tr><td>Document backup</td><td>Nightly</td><td>Snapshot <code>storage/app/public</code> (invoices, reports)</td></tr>
+        <tr><td>Redis persistence</td><td>Continuous</td><td>AOF enabled</td></tr>
+        <tr><td>Log rotation</td><td>Daily</td><td>logrotate on <code>storage/logs</code></td></tr>
+        <tr><td>Security updates</td><td>Monthly</td><td><code>apt upgrade</code> in a maintenance window</td></tr>
+    </tbody>
+</table>
+<pre><code># Example nightly DB backup (add to cron)
+0 2 * * * mysqldump -u hms_user -p'&lt;pw&gt;' hms | gzip &gt; /backups/hms_$(date +\%F).sql.gz</code></pre>
+
+<h2><span class="num">14</span>Deploy &amp; Release Checklist</h2>
+<pre><code># On each release
+cd /var/www/hms
+php artisan down                       # maintenance mode
+git pull
+composer install --no-dev --optimize-autoloader
+npm ci &amp;&amp; npm run build
+php artisan migrate --force
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan event:cache
+php artisan horizon:terminate          # restart workers
+php artisan up                         # back online</code></pre>
+<div class="callout gold">
+    <strong>Pre-flight:</strong> run <code>php artisan test</code> in CI and confirm all tests pass before promoting a release to production.
+</div>
+
+<div class="doc-footer">
+    Collin Saunders Hospital — Hospital Management System · Deployment Guide v1.0 · Confidential
+</div>
+
+</div>
+</body>
+</html>

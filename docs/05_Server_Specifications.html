@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HMS — Server Specifications</title>
+<link rel="stylesheet" href="assets/hms-theme.css">
+</head>
+<body>
+<div class="masthead">
+    <div class="logo-mark">
+        <div class="cross"></div>
+        <div class="brand-name">HMS · Collin Saunders Hospital</div>
+    </div>
+    <h1>Server Specifications</h1>
+    <p class="subtitle">Hardware, Sizing &amp; Capacity Planning</p>
+    <div class="accent-bar"></div>
+    <div class="meta">
+        <span><strong>Version:</strong> 1.0</span>
+        <span><strong>Date:</strong> 31 August 2026</span>
+    </div>
+</div>
+
+<div class="doc">
+
+<h2><span class="num">1</span>Recommended Production Server</h2>
+<div class="cards">
+    <div class="card"><h4>CPU</h4><div class="big">8 vCPU</div><p>x86-64, 2.4 GHz+ base clock</p></div>
+    <div class="card"><h4>Memory</h4><div class="big">16 GB</div><p>DDR4 ECC preferred</p></div>
+    <div class="card"><h4>Storage</h4><div class="big">160 GB</div><p>SSD/NVMe, RAID-1 recommended</p></div>
+    <div class="card"><h4>Network</h4><div class="big">1 Gbps</div><p>Wired LAN, static IP</p></div>
+</div>
+
+<h2><span class="num">2</span>Sizing by Deployment Size</h2>
+<table>
+    <thead><tr><th>Profile</th><th>Concurrent Users</th><th>vCPU</th><th>RAM</th><th>Disk</th><th>Topology</th></tr></thead>
+    <tbody>
+        <tr><td>Small clinic</td><td>≤ 25</td><td>4</td><td>8 GB</td><td>80 GB SSD</td><td>All-in-one node</td></tr>
+        <tr><td><strong>Hospital (recommended)</strong></td><td>≤ 100</td><td>8</td><td>16 GB</td><td>160 GB SSD</td><td>All-in-one node</td></tr>
+        <tr><td>Large / HA</td><td>100–300</td><td>8 + 8</td><td>16 + 16 GB</td><td>160 + 250 GB SSD</td><td>App node + Data node</td></tr>
+    </tbody>
+</table>
+
+<h2><span class="num">3</span>Memory Allocation (16 GB node)</h2>
+<table>
+    <thead><tr><th>Service</th><th>Allocation</th><th>Rationale</th></tr></thead>
+    <tbody>
+        <tr><td>PHP-FPM pool</td><td>~2.0 GB</td><td>40 workers × ~50 MB</td></tr>
+        <tr><td>Database (MySQL/PG)</td><td>~6 GB</td><td>Buffer pool / shared buffers</td></tr>
+        <tr><td>Redis</td><td>~2 GB</td><td>Cache, sessions, queues</td></tr>
+        <tr><td>Horizon workers</td><td>~1 GB</td><td>Up to 10 processes</td></tr>
+        <tr><td>OS + Nginx + headroom</td><td>~5 GB</td><td>Buffers, spikes, OS cache</td></tr>
+    </tbody>
+</table>
+
+<h2><span class="num">4</span>Storage Planning</h2>
+<table>
+    <thead><tr><th>Volume</th><th>Purpose</th><th>Guidance</th></tr></thead>
+    <tbody>
+        <tr><td>System / app</td><td>OS, application code, dependencies</td><td>60–80 GB SSD</td></tr>
+        <tr><td>Database</td><td>Primary data growth</td><td>Grows with patient/visit volume; monitor</td></tr>
+        <tr><td>Documents</td><td>Invoice &amp; report PDFs, exports</td><td>Under <code>storage/app/public</code></td></tr>
+        <tr><td>Backups</td><td>Nightly DB + document snapshots</td><td>Separate volume or off-server; 30-day retention</td></tr>
+    </tbody>
+</table>
+<div class="callout info">
+    <strong>Disk type matters:</strong> use SSD/NVMe. Database and Redis performance degrade sharply on spinning disks. RAID-1 (mirroring) protects against single-disk failure.
+</div>
+
+<h2><span class="num">5</span>Operating System</h2>
+<ul>
+    <li><strong>Ubuntu Server 22.04 LTS or 24.04 LTS</strong> (64-bit) — long-term support, well-tested with the stack.</li>
+    <li>Alternative: Debian 12, RHEL/Rocky Linux 9.</li>
+    <li>64-bit only. Kernel with up-to-date security patches.</li>
+</ul>
+
+<h2><span class="num">6</span>Software Stack Summary</h2>
+<table>
+    <thead><tr><th>Component</th><th>Version</th><th>Role</th></tr></thead>
+    <tbody>
+        <tr><td>Nginx</td><td>1.24+</td><td>Web server / TLS termination / reverse proxy</td></tr>
+        <tr><td>PHP-FPM</td><td>8.3+</td><td>Application runtime</td></tr>
+        <tr><td>MySQL / PostgreSQL</td><td>8.0+ / 14+</td><td>Primary datastore</td></tr>
+        <tr><td>Redis</td><td>7.x</td><td>Cache, session, queue</td></tr>
+        <tr><td>Horizon</td><td>latest</td><td>Queue worker manager</td></tr>
+        <tr><td>Supervisor</td><td>4.x</td><td>Process supervision for Horizon</td></tr>
+    </tbody>
+</table>
+
+<h2><span class="num">7</span>Environmental &amp; Operational</h2>
+<ul>
+    <li><strong>Power:</strong> UPS with clean shutdown; generator backup recommended for a hospital.</li>
+    <li><strong>Cooling:</strong> server room within manufacturer temperature range.</li>
+    <li><strong>Network:</strong> wired Gigabit LAN, static IP, internal DNS entry (e.g. <code>hms.hospital.local</code>).</li>
+    <li><strong>Firewall:</strong> expose only 443 (and 80 for redirect) to the LAN; SSH restricted to admin subnet.</li>
+    <li><strong>Time sync:</strong> NTP enabled for accurate audit timestamps.</li>
+</ul>
+
+<h2><span class="num">8</span>Monitoring Recommendations</h2>
+<table>
+    <thead><tr><th>Metric</th><th>Watch For</th></tr></thead>
+    <tbody>
+        <tr><td>CPU / load</td><td>Sustained &gt; 70%</td></tr>
+        <tr><td>Memory</td><td>Swap usage &gt; 0</td></tr>
+        <tr><td>Disk</td><td>&lt; 20% free</td></tr>
+        <tr><td>Queue depth (Horizon)</td><td>Growing backlog</td></tr>
+        <tr><td>DB slow queries</td><td>Queries &gt; 500 ms</td></tr>
+        <tr><td>Failed jobs</td><td>Any non-zero — investigate</td></tr>
+    </tbody>
+</table>
+
+<div class="doc-footer">
+    Collin Saunders Hospital — Hospital Management System · Server Specifications v1.0 · Confidential
+</div>
+
+</div>
+</body>
+</html>

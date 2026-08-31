@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HMS — Architecture Document</title>
+<link rel="stylesheet" href="assets/hms-theme.css">
+</head>
+<body>
+<div class="masthead">
+    <div class="logo-mark">
+        <div class="cross"></div>
+        <div class="brand-name">HMS · Collin Saunders Hospital</div>
+    </div>
+    <h1>Architecture Document</h1>
+    <p class="subtitle">Technical Architecture, Stack &amp; Infrastructure</p>
+    <div class="accent-bar"></div>
+    <div class="meta">
+        <span><strong>Version:</strong> 1.0</span>
+        <span><strong>Date:</strong> 31 August 2026</span>
+        <span><strong>Audience:</strong> Technical</span>
+    </div>
+</div>
+
+<div class="doc">
+
+<div class="toc">
+    <h3>Contents</h3>
+    <ol>
+        <li>Architecture Overview</li>
+        <li>Technology Stack</li>
+        <li>Logical Architecture</li>
+        <li>Application Layers</li>
+        <li>Domain Model &amp; Automation</li>
+        <li>Request Lifecycle</li>
+        <li>Background Processing</li>
+        <li>Caching &amp; Sessions</li>
+        <li>Data Architecture</li>
+        <li>Security Architecture</li>
+        <li>Deployment Topology</li>
+        <li>Scalability &amp; Resilience</li>
+    </ol>
+</div>
+
+<h2><span class="num">1</span>Architecture Overview</h2>
+<p>HMS is a <strong>server-rendered monolithic web application</strong> built on the Laravel framework with Laravel Nova as the administrative UI layer. It follows a layered MVC-plus-domain architecture, favouring convention, testability, and a small operational footprint suitable for an on-premise hospital deployment.</p>
+
+<div class="callout info">
+    <strong>Architectural style:</strong> Modular monolith. All modules share one codebase and database, communicating through Eloquent models and domain events. This keeps the operational surface small while allowing clean module boundaries.
+</div>
+
+<h2><span class="num">2</span>Technology Stack</h2>
+<table>
+    <thead><tr><th>Layer</th><th>Technology</th><th>Version</th></tr></thead>
+    <tbody>
+        <tr><td>Language</td><td>PHP</td><td>8.3+</td></tr>
+        <tr><td>Framework</td><td>Laravel</td><td>13.x</td></tr>
+        <tr><td>Admin UI</td><td>Laravel Nova</td><td>5.x</td></tr>
+        <tr><td>Auth</td><td>Laravel Fortify (2FA, passkeys)</td><td>1.x</td></tr>
+        <tr><td>Authorisation</td><td>spatie/laravel-permission</td><td>8.x</td></tr>
+        <tr><td>PDF</td><td>barryvdh/laravel-dompdf, laraveldaily/laravel-invoices</td><td>3.x / 4.x</td></tr>
+        <tr><td>Excel/CSV</td><td>maatwebsite/excel</td><td>4.x</td></tr>
+        <tr><td>Database</td><td>MySQL 8 / PostgreSQL 14+ (SQLite for test)</td><td>—</td></tr>
+        <tr><td>Cache / Queue / Session</td><td>Redis</td><td>7.x</td></tr>
+        <tr><td>Queue worker</td><td>Laravel Horizon</td><td>latest</td></tr>
+        <tr><td>Web server</td><td>Nginx + PHP-FPM</td><td>—</td></tr>
+        <tr><td>Process manager</td><td>Supervisor</td><td>—</td></tr>
+        <tr><td>Front-end build</td><td>Vite + Tailwind (Nova assets)</td><td>—</td></tr>
+    </tbody>
+</table>
+
+<h2><span class="num">3</span>Logical Architecture</h2>
+<div class="diagram">
+┌──────────────────────────────────────────────────────────────┐
+│                        CLIENTS (Browsers)                      │
+│         Reception · Wards · Pharmacy · Billing · Admin         │
+└───────────────────────────────┬──────────────────────────────┘
+                                 │ HTTPS
+┌───────────────────────────────▼──────────────────────────────┐
+│                    NGINX (TLS, reverse proxy)                  │
+└───────────────────────────────┬──────────────────────────────┘
+                                 │ FastCGI
+┌───────────────────────────────▼──────────────────────────────┐
+│                          PHP-FPM pool                          │
+│   ┌────────────────────────────────────────────────────────┐ │
+│   │                 LARAVEL APPLICATION                      │ │
+│   │  Nova UI · Policies · Resources · Actions · Domain Events│ │
+│   └────────────────────────────────────────────────────────┘ │
+└──────┬────────────────────┬───────────────────────┬───────────┘
+       │                    │                        │
+┌──────▼──────┐   ┌─────────▼────────┐    ┌──────────▼─────────┐
+│  MySQL/PG   │   │      Redis       │    │  Filesystem/Disk   │
+│  (primary   │   │ cache · session  │    │  invoices · report │
+│   data)     │   │ queue · Horizon  │    │  PDFs · exports    │
+└─────────────┘   └────────┬─────────┘    └────────────────────┘
+                           │
+                  ┌────────▼─────────┐
+                  │ Supervisor →     │
+                  │ Horizon workers  │
+                  └──────────────────┘
+</div>
+
+<h2><span class="num">4</span>Application Layers</h2>
+<div class="cards">
+    <div class="card"><h4>Presentation</h4><p>Laravel Nova resources, dashboards, metrics, filters, actions, and the public landing page.</p></div>
+    <div class="card"><h4>Authorisation</h4><p>Policies per model + Spatie permissions; report &amp; menu gating via <code>canSee</code>.</p></div>
+    <div class="card"><h4>Domain</h4><p>Eloquent models encapsulating business rules through model events (booted hooks) and helper methods.</p></div>
+    <div class="card"><h4>Services</h4><p>Report data aggregation, PDF/Excel generation, invoice building.</p></div>
+    <div class="card"><h4>Persistence</h4><p>Eloquent ORM over MySQL/PostgreSQL with UUID keys and migrations.</p></div>
+    <div class="card"><h4>Infrastructure</h4><p>Redis (cache/queue/session), Horizon workers, filesystem for generated documents.</p></div>
+</div>
+
+<h2><span class="num">5</span>Domain Model &amp; Automation</h2>
+<p>Business logic lives in the domain models as event-driven automation, keeping behaviour consistent regardless of entry point (UI, action, or seeder).</p>
+<table>
+    <thead><tr><th>Model</th><th>Event</th><th>Behaviour</th></tr></thead>
+    <tbody>
+        <tr><td>Patient</td><td>creating</td><td>Generate sequential patient number</td></tr>
+        <tr><td>Invoice</td><td>creating / saving</td><td>Generate invoice number; derive status from payment</td></tr>
+        <tr><td>InvoiceItem</td><td>saving / saved / deleted</td><td>Compute line total; recalc parent invoice total</td></tr>
+        <tr><td>PrescriptionItem</td><td>updating / updated</td><td>Deduct/restore stock; guard stock &amp; expiry; sync prescription status</td></tr>
+        <tr><td>Admission</td><td>saving / created / updated</td><td>Prevent double-booking; sync bed status; stamp discharge time</td></tr>
+    </tbody>
+</table>
+
+<h2><span class="num">6</span>Request Lifecycle</h2>
+<div class="diagram">
+Browser → Nginx (TLS) → PHP-FPM → Laravel Kernel
+   → Middleware (auth, Nova guard, CheckNovaRegistration)
+   → Route → Nova Controller / ReportController
+   → Policy authorisation check
+   → Eloquent model (fires domain events)
+   → Database (MySQL/PostgreSQL)
+   → Response (JSON for Nova SPA / PDF stream for reports)
+</div>
+
+<h2><span class="num">7</span>Background Processing</h2>
+<p>Long-running or deferrable work (large exports, notifications, scheduled report generation) is dispatched to Redis-backed queues, processed by <strong>Laravel Horizon</strong> workers under Supervisor.</p>
+<ul>
+    <li><strong>Queue driver:</strong> Redis</li>
+    <li><strong>Worker manager:</strong> Horizon (auto-balancing, metrics dashboard at <code>/horizon</code>)</li>
+    <li><strong>Process supervision:</strong> Supervisor restarts workers on failure/deploy</li>
+    <li><strong>Scheduler:</strong> Laravel scheduler via system cron for daily backups, expiry checks, and low-stock alerts</li>
+</ul>
+
+<h2><span class="num">8</span>Caching &amp; Sessions</h2>
+<table>
+    <thead><tr><th>Concern</th><th>Store</th><th>Notes</th></tr></thead>
+    <tbody>
+        <tr><td>Application cache</td><td>Redis</td><td>Config, permission cache, computed lookups</td></tr>
+        <tr><td>Sessions</td><td>Redis</td><td>Fast, shared across app servers if scaled</td></tr>
+        <tr><td>Queues</td><td>Redis</td><td>Consumed by Horizon</td></tr>
+        <tr><td>Permission cache</td><td>Redis</td><td>Spatie cache; flushed on role/permission change</td></tr>
+    </tbody>
+</table>
+
+<h2><span class="num">9</span>Data Architecture</h2>
+<ul>
+    <li><strong>UUID primary keys</strong> across all domain tables.</li>
+    <li><strong>Foreign key constraints</strong> with appropriate cascade / null-on-delete behaviour.</li>
+    <li><strong>Indexes</strong> on status, date, and foreign-key columns used by reports and filters.</li>
+    <li><strong>Soft deletes</strong> on clinical entities (Patient, Visit, Admission, Invoice, Medication, Referral) for recoverability and audit.</li>
+    <li><strong>Immutable ledgers</strong> — stock movements and action events are append-only.</li>
+</ul>
+
+<h2><span class="num">10</span>Security Architecture</h2>
+<div class="cards">
+    <div class="card"><h4>Transport</h4><p>TLS 1.2+ enforced at Nginx; HSTS recommended.</p></div>
+    <div class="card"><h4>Identity</h4><p>Fortify auth, optional 2FA &amp; passkeys, session encryption.</p></div>
+    <div class="card"><h4>Access</h4><p>Policy + permission checks on every resource and report.</p></div>
+    <div class="card"><h4>Audit</h4><p>Append-only action-event log of all writes.</p></div>
+    <div class="card"><h4>Data</h4><p>Hashed passwords, UUID keys, least-privilege DB user.</p></div>
+    <div class="card"><h4>App hardening</h4><p>CSRF protection, input validation, parameterised queries via Eloquent.</p></div>
+</div>
+
+<h2><span class="num">11</span>Deployment Topology</h2>
+<p>The recommended production topology is a single well-specified application server co-located with the database, or a two-node split for higher availability. See the <em>Deployment Guide</em> for full setup.</p>
+<div class="diagram">
+Single-node (recommended for launch)
+┌──────────────────────────────────────────┐
+│  App Server                                │
+│  Nginx · PHP-FPM · Redis · Horizon         │
+│  MySQL/PostgreSQL · Filesystem             │
+└──────────────────────────────────────────┘
+
+Two-node (growth path)
+┌───────────────────┐      ┌────────────────────┐
+│  App Node          │◄────►│  Data Node          │
+│  Nginx · PHP-FPM   │      │  MySQL/PG · Redis   │
+│  Horizon workers   │      │  Backups            │
+└───────────────────┘      └────────────────────┘
+</div>
+
+<h2><span class="num">12</span>Scalability &amp; Resilience</h2>
+<ul>
+    <li><strong>Horizontal scaling:</strong> stateless app tier (sessions in Redis) allows adding PHP-FPM nodes behind a load balancer.</li>
+    <li><strong>Vertical headroom:</strong> the recommended server spec supports 100+ concurrent users with margin.</li>
+    <li><strong>Graceful degradation:</strong> queued work retries with backoff; failed jobs are retained for inspection.</li>
+    <li><strong>Backups:</strong> nightly database dumps plus filesystem snapshot of generated documents.</li>
+    <li><strong>Zero-downtime deploys:</strong> atomic release symlink switch, worker restart via Horizon terminate.</li>
+</ul>
+
+<div class="doc-footer">
+    Collin Saunders Hospital — Hospital Management System · Architecture Document v1.0 · Confidential
+</div>
+
+</div>
+</body>
+</html>

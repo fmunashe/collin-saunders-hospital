@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HMS — Documentation</title>
+<link rel="stylesheet" href="assets/hms-theme.css">
+<style>
+    .doc-card {
+        display: block;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 24px 26px;
+        margin-bottom: 16px;
+        text-decoration: none;
+        color: var(--ink);
+        transition: box-shadow .15s, border-color .15s;
+        border-left: 5px solid var(--primary);
+    }
+    .doc-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); border-left-color: var(--accent); }
+    .doc-card h3 { margin: 0 0 6px; color: var(--primary-dark); }
+    .doc-card p { margin: 0; color: var(--muted); font-size: 14px; }
+    .doc-card .tag { float: right; }
+</style>
+</head>
+<body>
+<div class="masthead">
+    <div class="logo-mark">
+        <div class="cross"></div>
+        <div class="brand-name">HMS · Collin Saunders Hospital</div>
+    </div>
+    <h1>Documentation Portal</h1>
+    <p class="subtitle">Hospital Management System — Project &amp; Technical Documentation</p>
+    <div class="accent-bar"></div>
+    <div class="meta"><span><strong>Version:</strong> 1.0</span><span><strong>Date:</strong> 31 August 2026</span></div>
+</div>
+
+<div class="doc">
+
+    <h2><span class="num">A</span>Solution &amp; Technical</h2>
+
+    <a class="doc-card" href="01_Solution_Design.html">
+        <span class="badge green tag">Business</span>
+        <h3>Solution Design Document</h3>
+        <p>Scope, modules, business rules, workflows, data model, and non-functional requirements.</p>
+    </a>
+
+    <a class="doc-card" href="02_Architecture.html">
+        <span class="badge green tag">Technical</span>
+        <h3>Architecture Document</h3>
+        <p>Technology stack, application layers, domain automation, request lifecycle, deployment topology.</p>
+    </a>
+
+    <a class="doc-card" href="03_QA_Test_Strategy.html">
+        <span class="badge green tag">Quality</span>
+        <h3>QA &amp; Test Strategy</h3>
+        <p>Test levels, automated coverage, defect management, UAT approach, traceability matrix.</p>
+    </a>
+
+    <h2><span class="num">B</span>Operations</h2>
+
+    <a class="doc-card" href="04_Deployment_Guide.html">
+        <span class="badge gold tag">Ops</span>
+        <h3>Deployment Guide</h3>
+        <p>Nginx, PHP-FPM, Redis, Supervisor, Horizon setup and full release checklist.</p>
+    </a>
+
+    <a class="doc-card" href="05_Server_Specifications.html">
+        <span class="badge gold tag">Ops</span>
+        <h3>Server Specifications</h3>
+        <p>Linux server sizing, memory allocation, storage planning, monitoring.</p>
+    </a>
+
+    <h2><span class="num">C</span>Project (Markdown)</h2>
+    <a class="doc-card" href="HMS_Project_Costing_Proposal.md">
+        <span class="badge green tag">Commercial</span>
+        <h3>Project Costing Proposal</h3>
+        <p>Personnel, travel, infrastructure costs and payment schedule (USD).</p>
+    </a>
+    <a class="doc-card" href="HMS_Team_Composition.md">
+        <span class="badge green tag">Project</span>
+        <h3>Team Composition</h3>
+        <p>Roles, responsibilities, allocation, RACI matrix, communication plan.</p>
+    </a>
+    <a class="doc-card" href="HMS_Gantt_Chart.md">
+        <span class="badge green tag">Project</span>
+        <h3>Gantt Chart &amp; Timeline</h3>
+        <p>Phase breakdown, activities, milestones, critical path.</p>
+    </a>
+
+    <div class="callout info" style="margin-top:34px">
+        <strong>Printing to PDF:</strong> open any HTML document in a browser and use <em>Print → Save as PDF</em>. The brand theme and page breaks are print-optimised.
+    </div>
+
+    <div class="doc-footer">
+        Collin Saunders Hospital — Hospital Management System Documentation · v1.0 · Confidential
+    </div>
+
+</div>
+</body>
+</html>

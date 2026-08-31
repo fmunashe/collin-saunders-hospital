@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HMS — QA &amp; Test Strategy</title>
+<link rel="stylesheet" href="assets/hms-theme.css">
+</head>
+<body>
+<div class="masthead">
+    <div class="logo-mark">
+        <div class="cross"></div>
+        <div class="brand-name">HMS · Collin Saunders Hospital</div>
+    </div>
+    <h1>QA &amp; Test Strategy</h1>
+    <p class="subtitle">Quality Assurance, Test Coverage &amp; Acceptance</p>
+    <div class="accent-bar"></div>
+    <div class="meta">
+        <span><strong>Version:</strong> 1.0</span>
+        <span><strong>Date:</strong> 31 August 2026</span>
+        <span><strong>Owner:</strong> QA / Test Engineer</span>
+    </div>
+</div>
+
+<div class="doc">
+
+<div class="toc">
+    <h3>Contents</h3>
+    <ol>
+        <li>Purpose &amp; Objectives</li>
+        <li>Test Levels</li>
+        <li>Test Types</li>
+        <li>Automated Test Coverage</li>
+        <li>Test Environments</li>
+        <li>Test Data Strategy</li>
+        <li>Defect Management</li>
+        <li>Entry &amp; Exit Criteria</li>
+        <li>UAT Approach</li>
+        <li>Traceability Matrix</li>
+        <li>Tooling</li>
+        <li>Roles &amp; Responsibilities</li>
+    </ol>
+</div>
+
+<h2><span class="num">1</span>Purpose &amp; Objectives</h2>
+<p>This strategy defines how quality is assured across the HMS Outpatient, Inpatient, and Pharmacy modules. The goal is to guarantee that clinical and financial data remain accurate, that automated business rules behave correctly, and that the system is safe for a live hospital environment.</p>
+<div class="callout gold">
+    <strong>Quality priority:</strong> In a hospital system, data integrity outranks feature velocity. Stock counts, bed occupancy, and billing totals must always be correct — these are the most heavily tested areas.
+</div>
+
+<h2><span class="num">2</span>Test Levels</h2>
+<table>
+    <thead><tr><th>Level</th><th>Focus</th><th>Owner</th></tr></thead>
+    <tbody>
+        <tr><td>Unit</td><td>Individual model methods, helpers, calculations</td><td>Developers</td></tr>
+        <tr><td>Feature / Integration</td><td>Domain workflows across models &amp; events</td><td>Developers + QA</td></tr>
+        <tr><td>System</td><td>End-to-end flows through the Nova UI</td><td>QA</td></tr>
+        <tr><td>Acceptance (UAT)</td><td>Business validation by hospital staff</td><td>Client + BA</td></tr>
+    </tbody>
+</table>
+
+<h2><span class="num">3</span>Test Types</h2>
+<div class="cards">
+    <div class="card"><h4>Functional</h4><p>Each module's features against acceptance criteria.</p></div>
+    <div class="card"><h4>Business-rule</h4><p>Automated guards: stock, expiry, bed occupancy, invoice totals.</p></div>
+    <div class="card"><h4>Security / RBAC</h4><p>Each role sees and does only what it is permitted.</p></div>
+    <div class="card"><h4>Regression</h4><p>Automated suite run on every change.</p></div>
+    <div class="card"><h4>Performance</h4><p>List/report response under representative load.</p></div>
+    <div class="card"><h4>Usability</h4><p>Workflow clarity for reception, wards, pharmacy, billing.</p></div>
+</div>
+
+<h2><span class="num">4</span>Automated Test Coverage</h2>
+<p>The automated suite (PHPUnit / Pest) protects the critical business logic. Current coverage:</p>
+<table>
+    <thead><tr><th>Suite</th><th>Scenarios Covered</th></tr></thead>
+    <tbody>
+        <tr><td>PharmacyTest</td><td>Stock deduction on dispense; stock restoration on reversal; over-dispensing blocked; expired-medication blocked; prescription status auto-sync</td></tr>
+        <tr><td>InpatientTest</td><td>Bed occupied on admission; bed freed on discharge; double-booking prevented; bed reuse after discharge; inpatient flag</td></tr>
+        <tr><td>BillingTest</td><td>Invoice number generation; line-total calculation; invoice total = sum of items; recalculation on delete; paid/partially-paid status derivation</td></tr>
+    </tbody>
+</table>
+<div class="callout info">
+    <strong>Run the suite:</strong> <code>php artisan test</code> — executes against an in-memory SQLite database for speed and isolation. All tests must pass before any deployment.
+</div>
+
+<h3>Target Coverage Additions (ongoing)</h3>
+<ul>
+    <li>Policy/permission tests per role (authorised vs forbidden actions)</li>
+    <li>Report generation &amp; permission-gating tests</li>
+    <li>Visit-to-invoice generation action test</li>
+    <li>Medication administration stock-deduction test</li>
+</ul>
+
+<h2><span class="num">5</span>Test Environments</h2>
+<table>
+    <thead><tr><th>Environment</th><th>Purpose</th><th>Data</th></tr></thead>
+    <tbody>
+        <tr><td>Local</td><td>Developer testing</td><td>SQLite + seeders</td></tr>
+        <tr><td>CI</td><td>Automated suite on every push</td><td>In-memory SQLite</td></tr>
+        <tr><td>Staging</td><td>UAT &amp; integration validation</td><td>Anonymised representative data</td></tr>
+        <tr><td>Production</td><td>Live</td><td>Real data (no testing)</td></tr>
+    </tbody>
+</table>
+
+<h2><span class="num">6</span>Test Data Strategy</h2>
+<ul>
+    <li><strong>Seeders</strong> generate a realistic dataset: departments, doctors, wards, beds, medications (including deliberately low/out-of-stock and near-expiry items), patients, visits, admissions, prescriptions, and invoices.</li>
+    <li><strong>Edge cases</strong> are seeded intentionally: out-of-stock medication, expired stock, occupied beds, partially-paid invoices.</li>
+    <li>UAT uses <strong>anonymised</strong> data — no real patient PII in non-production environments.</li>
+</ul>
+
+<h2><span class="num">7</span>Defect Management</h2>
+<table>
+    <thead><tr><th>Severity</th><th>Definition</th><th>Target Fix</th></tr></thead>
+    <tbody>
+        <tr><td><span class="badge" style="background:#fef2f2;color:#dc2626">Critical</span></td><td>Data loss/corruption, security breach, system down</td><td>Immediate</td></tr>
+        <tr><td><span class="badge gold">High</span></td><td>Core workflow blocked, no workaround</td><td>1 business day</td></tr>
+        <tr><td><span class="badge green">Medium</span></td><td>Feature impaired, workaround exists</td><td>Within sprint</td></tr>
+        <tr><td><span class="badge green">Low</span></td><td>Cosmetic / minor</td><td>Backlog</td></tr>
+    </tbody>
+</table>
+<p>Defects are logged with steps to reproduce, expected vs actual result, environment, severity, and screenshots. Each fix links to a regression test where feasible.</p>
+
+<h2><span class="num">8</span>Entry &amp; Exit Criteria</h2>
+<h3>Entry (testing begins when)</h3>
+<ul>
+    <li>Feature is code-complete and merged to the test branch</li>
+    <li>Automated unit/feature tests pass</li>
+    <li>Test environment is deployed and seeded</li>
+</ul>
+<h3>Exit (a release is ready when)</h3>
+<ul>
+    <li>100% of automated tests pass</li>
+    <li>No open Critical or High defects</li>
+    <li>All acceptance criteria for in-scope stories are met</li>
+    <li>UAT sign-off obtained for the phase</li>
+</ul>
+
+<h2><span class="num">9</span>UAT Approach</h2>
+<ol>
+    <li>BA prepares UAT scripts mapped to real hospital workflows.</li>
+    <li>Hospital staff execute scripts on staging with anonymised data.</li>
+    <li>Findings are triaged daily during the on-site UAT visit.</li>
+    <li>Sign-off is recorded per module (Outpatient, Inpatient, Pharmacy).</li>
+</ol>
+
+<h2><span class="num">10</span>Traceability Matrix (sample)</h2>
+<table>
+    <thead><tr><th>Requirement</th><th>Business Rule</th><th>Automated Test</th></tr></thead>
+    <tbody>
+        <tr><td>Stock never negative</td><td>BR-2</td><td>PharmacyTest::cannot_dispense_more_than_available_stock</td></tr>
+        <tr><td>No expired dispensing</td><td>BR-3</td><td>PharmacyTest::cannot_dispense_expired_medication</td></tr>
+        <tr><td>No bed double-booking</td><td>BR-4</td><td>InpatientTest::cannot_double_book_an_occupied_bed</td></tr>
+        <tr><td>Bed lifecycle</td><td>BR-5</td><td>InpatientTest::discharging_a_patient_frees_the_bed</td></tr>
+        <tr><td>Invoice totals</td><td>BR-6</td><td>BillingTest::invoice_total_reflects_sum_of_items</td></tr>
+        <tr><td>Invoice status</td><td>BR-7</td><td>BillingTest::status_becomes_paid_when_fully_paid</td></tr>
+    </tbody>
+</table>
+
+<h2><span class="num">11</span>Tooling</h2>
+<table>
+    <thead><tr><th>Purpose</th><th>Tool</th></tr></thead>
+    <tbody>
+        <tr><td>Unit/Feature testing</td><td>PHPUnit / Pest</td></tr>
+        <tr><td>Code style</td><td>Laravel Pint</td></tr>
+        <tr><td>Static analysis</td><td>IDE diagnostics (extendable to PHPStan/Larastan)</td></tr>
+        <tr><td>End-to-end (optional)</td><td>Laravel Dusk / Playwright</td></tr>
+        <tr><td>CI</td><td>GitHub Actions / GitLab CI</td></tr>
+        <tr><td>Defect tracking</td><td>Jira / Linear</td></tr>
+    </tbody>
+</table>
+
+<h2><span class="num">12</span>Roles &amp; Responsibilities</h2>
+<table>
+    <thead><tr><th>Role</th><th>QA Responsibility</th></tr></thead>
+    <tbody>
+        <tr><td>Developers</td><td>Write unit/feature tests, fix defects, keep suite green</td></tr>
+        <tr><td>QA Engineer</td><td>Own test plans, execute system tests, manage defects, coordinate UAT</td></tr>
+        <tr><td>Business Analyst</td><td>Author UAT scripts, validate against requirements</td></tr>
+        <tr><td>Project Manager</td><td>Gate releases against exit criteria</td></tr>
+    </tbody>
+</table>
+
+<div class="doc-footer">
+    Collin Saunders Hospital — Hospital Management System · QA &amp; Test Strategy v1.0 · Confidential
+</div>
+
+</div>
+</body>
+</html>

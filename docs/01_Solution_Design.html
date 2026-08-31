@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HMS — Solution Design Document</title>
+<link rel="stylesheet" href="assets/hms-theme.css">
+</head>
+<body>
+<div class="masthead">
+    <div class="logo-mark">
+        <div class="cross"></div>
+        <div class="brand-name">HMS · Collin Saunders Hospital</div>
+    </div>
+    <h1>Solution Design Document</h1>
+    <p class="subtitle">Hospital Management System — Outpatient, Inpatient &amp; Pharmacy</p>
+    <div class="accent-bar"></div>
+    <div class="meta">
+        <span><strong>Version:</strong> 1.0</span>
+        <span><strong>Date:</strong> 31 August 2026</span>
+        <span><strong>Status:</strong> For Client Review</span>
+    </div>
+</div>
+
+<div class="doc">
+
+<div class="toc">
+    <h3>Contents</h3>
+    <ol>
+        <li>Executive Summary</li>
+        <li>Business Context &amp; Objectives</li>
+        <li>Scope</li>
+        <li>Stakeholders &amp; Roles</li>
+        <li>Functional Modules</li>
+        <li>Key Business Rules</li>
+        <li>Data Model Overview</li>
+        <li>Workflows</li>
+        <li>Reporting &amp; Analytics</li>
+        <li>Security &amp; Access Control</li>
+        <li>Non-Functional Requirements</li>
+        <li>Assumptions &amp; Constraints</li>
+    </ol>
+</div>
+
+<h2><span class="num">1</span>Executive Summary</h2>
+<p>The Hospital Management System (HMS) is a web-based platform that digitises the core clinical and administrative operations of Collin Saunders Hospital. Phase 1 delivers three tightly integrated modules — <strong>Outpatient</strong>, <strong>Inpatient</strong>, and <strong>Pharmacy</strong> — supported by billing, referrals, role-based access control, and a comprehensive reporting suite.</p>
+<p>The system is built on Laravel with Laravel Nova as the administrative interface, providing a secure, auditable, and maintainable foundation that can scale into laboratory, theatre, and radiology modules in Phase 2.</p>
+
+<div class="callout info">
+    <strong>Design principle:</strong> Automate what should be automatic. Bed occupancy, stock deduction, invoice totals, and prescription statuses are all driven by the system — reducing manual error and keeping data trustworthy.
+</div>
+
+<h2><span class="num">2</span>Business Context &amp; Objectives</h2>
+<table>
+    <thead><tr><th>Objective</th><th>How HMS Delivers It</th></tr></thead>
+    <tbody>
+        <tr><td>Single source of patient truth</td><td>Unified patient record with auto-generated patient numbers, visit history, admissions, prescriptions, and invoices.</td></tr>
+        <tr><td>Accurate pharmacy inventory</td><td>Stock movements are logged for every receipt, dispense, adjustment, and return, with negative-stock and expiry guards.</td></tr>
+        <tr><td>Reliable billing</td><td>Invoice totals are derived from line items; statuses follow payments automatically.</td></tr>
+        <tr><td>Operational visibility</td><td>Seven role-gated report dashboards plus exportable PDF/Excel reports.</td></tr>
+        <tr><td>Accountability</td><td>Full audit log of every create/update/delete action, plus "dispensed by / administered by" attribution.</td></tr>
+    </tbody>
+</table>
+
+<h2><span class="num">3</span>Scope</h2>
+<h3>In Scope (Phase 1)</h3>
+<div class="cards">
+    <div class="card"><h4>Outpatient</h4><p>Patient registration, visits, consultations, doctor &amp; department management, visit-based invoicing.</p></div>
+    <div class="card"><h4>Inpatient</h4><p>Admissions, ward &amp; bed management, bed occupancy automation, inpatient medication administration, discharge.</p></div>
+    <div class="card"><h4>Pharmacy</h4><p>Medication catalogue, stock control, prescriptions, dispensing, stock movement audit, expiry tracking.</p></div>
+    <div class="card"><h4>Cross-cutting</h4><p>Billing &amp; invoicing, medical aid, referrals, RBAC, reporting, audit log, PDF/Excel exports.</p></div>
+</div>
+
+<h3>Out of Scope (Deferred to Phase 2)</h3>
+<ul>
+    <li>Laboratory module (test requests, sample tracking, results)</li>
+    <li>Theatre module (surgery scheduling, pre/post-op records)</li>
+    <li>Radiology module (imaging requests, reporting)</li>
+    <li>Third-party integrations (national health systems, external medical-aid claim APIs)</li>
+    <li>Native mobile applications</li>
+</ul>
+
+<h2><span class="num">4</span>Stakeholders &amp; Roles</h2>
+<table>
+    <thead><tr><th>Role</th><th>Primary Responsibilities in HMS</th></tr></thead>
+    <tbody>
+        <tr><td>Administrator</td><td>Full system access, user &amp; role management, configuration, all reports.</td></tr>
+        <tr><td>Doctor</td><td>Patients, visits, admissions, prescriptions, referrals; clinical reports.</td></tr>
+        <tr><td>Nurse</td><td>Visit updates, admissions, bed status, medication administration.</td></tr>
+        <tr><td>Pharmacist</td><td>Medication catalogue, stock, dispensing; pharmacy reports.</td></tr>
+        <tr><td>Receptionist</td><td>Patient registration, visit booking, medical aid capture.</td></tr>
+        <tr><td>Billing Clerk</td><td>Invoices, payments, medical aid submission; financial reports.</td></tr>
+        <tr><td>Support Staff</td><td>Read-only reference data.</td></tr>
+    </tbody>
+</table>
+
+<h2><span class="num">5</span>Functional Modules</h2>
+
+<h3>5.1 Outpatient</h3>
+<ul>
+    <li>Patient registration with auto-generated sequential numbers (<code>PT00001</code>).</li>
+    <li>Inpatient / Outpatient status badge derived from active admissions.</li>
+    <li>Visit lifecycle: <span class="badge gold">waiting</span> → <span class="badge gold">in progress</span> → <span class="badge green">completed</span>.</li>
+    <li>One-click "Generate Invoice" from a visit (consultation fee + dispensed medications).</li>
+</ul>
+
+<h3>5.2 Inpatient</h3>
+<ul>
+    <li>Admissions linked to ward, bed, doctor, and department.</li>
+    <li><strong>Automatic bed occupancy</strong> — a bed becomes occupied on admission and is freed on discharge, transfer, or death.</li>
+    <li><strong>Double-booking prevention</strong> — a bed cannot host two admitted patients.</li>
+    <li>Inpatient medication administration with route, dosage, and stock deduction.</li>
+</ul>
+
+<h3>5.3 Pharmacy</h3>
+<ul>
+    <li>Medication catalogue with stock quantity, reorder level, unit price, expiry date.</li>
+    <li>Prescriptions with line items; single and bulk dispensing.</li>
+    <li><strong>Guards:</strong> cannot dispense beyond available stock or expired medication.</li>
+    <li>Automatic prescription status sync: pending → partially dispensed → dispensed.</li>
+    <li>Complete stock movement ledger (received, dispensed, returned, adjustment, expired).</li>
+</ul>
+
+<h2><span class="num">6</span>Key Business Rules</h2>
+<table>
+    <thead><tr><th>#</th><th>Rule</th><th>Enforcement</th></tr></thead>
+    <tbody>
+        <tr><td>BR-1</td><td>Patient &amp; invoice numbers are unique and sequential</td><td>Model creating event</td></tr>
+        <tr><td>BR-2</td><td>Stock can never go negative</td><td>Validation on dispense</td></tr>
+        <tr><td>BR-3</td><td>Expired medication cannot be dispensed or administered</td><td>Validation guard</td></tr>
+        <tr><td>BR-4</td><td>A bed hosts at most one admitted patient</td><td>Model saving validation</td></tr>
+        <tr><td>BR-5</td><td>Bed status mirrors admission lifecycle</td><td>Model events</td></tr>
+        <tr><td>BR-6</td><td>Invoice total = sum of line items</td><td>Recalculation on item change</td></tr>
+        <tr><td>BR-7</td><td>Invoice status follows payments</td><td>Model saving event</td></tr>
+        <tr><td>BR-8</td><td>Every stock &amp; clinical action is attributable to a user</td><td>Audit log + stamped fields</td></tr>
+    </tbody>
+</table>
+
+<h2><span class="num">7</span>Data Model Overview</h2>
+<div class="diagram">
+Patient ──1:N── Visit ──1:1── Invoice ──1:N── InvoiceItem
+   │              │
+   │              └──1:N── Prescription ──1:N── PrescriptionItem ──N:1── Medication
+   │
+   ├──1:N── Admission ──N:1── Ward ──1:N── Bed
+   │            │
+   │            ├──1:N── MedicationAdministration ──N:1── Medication
+   │            └──1:1── Invoice
+   │
+   ├──1:1── MedicalAidDetail ──N:1── MedicalAidScheme
+   └──1:N── Referral ──N:1── Doctor
+
+Medication ──1:N── StockMovement ──N:1── User
+Doctor ──N:1── Department        Staff ──N:1── Department
+User ──N:N── Role ──N:N── Permission   (Spatie RBAC)
+</div>
+<p>All entities use <strong>UUID primary keys</strong>, enabling safe distributed ID generation and preventing enumeration attacks.</p>
+
+<h2><span class="num">8</span>Workflows</h2>
+
+<h3>8.1 Outpatient Visit → Invoice</h3>
+<div class="diagram">
+Receptionist registers patient  →  books Visit (waiting)
+        ↓
+Doctor consults, records diagnosis  →  Visit (completed)
+        ↓
+Doctor writes Prescription  →  Pharmacy dispenses (stock deducted)
+        ↓
+Billing runs "Generate Invoice"  →  Invoice (pending)
+        ↓
+Payment captured  →  Invoice (paid / partially paid)  →  PDF issued
+</div>
+
+<h3>8.2 Inpatient Admission → Discharge</h3>
+<div class="diagram">
+Doctor admits patient, assigns available Bed
+        ↓  (bed auto-marked OCCUPIED, double-booking blocked)
+Nurse administers medication (stock deducted, audit logged)
+        ↓
+Doctor discharges patient
+        ↓  (bed auto-marked AVAILABLE, discharge time stamped)
+Admission invoice finalised
+</div>
+
+<h2><span class="num">9</span>Reporting &amp; Analytics</h2>
+<p>Seven role-gated report dashboards, each with an interactive view and a branded PDF export:</p>
+<div class="cards">
+    <div class="card"><h4>Patient</h4><p>Demographics, registrations, type &amp; billing split.</p></div>
+    <div class="card"><h4>Outpatient</h4><p>Visits by status, department, doctor workload.</p></div>
+    <div class="card"><h4>Inpatient</h4><p>Occupancy, length of stay, admissions/discharges.</p></div>
+    <div class="card"><h4>Pharmacy</h4><p>Stock levels, inventory value, dispensing, expiry.</p></div>
+    <div class="card"><h4>Financial</h4><p>Invoiced, collected, outstanding, revenue mix.</p></div>
+    <div class="card"><h4>Referral &amp; Staff</h4><p>Referral pipeline and staff distribution.</p></div>
+</div>
+
+<h2><span class="num">10</span>Security &amp; Access Control</h2>
+<ul>
+    <li><strong>Authentication:</strong> Laravel Fortify with optional two-factor authentication and passkeys.</li>
+    <li><strong>Authorisation:</strong> Spatie permission model — every resource has a policy checking granular permissions (<code>resource-action</code>).</li>
+    <li><strong>Report gating:</strong> each report requires a dedicated <code>view-*-reports</code> permission.</li>
+    <li><strong>Audit trail:</strong> all model changes recorded as Nova Action Events, exposed as a read-only Audit Log resource.</li>
+    <li><strong>Data protection:</strong> UUID keys, hashed passwords, encrypted sessions, PII handled per POPIA principles.</li>
+</ul>
+
+<h2><span class="num">11</span>Non-Functional Requirements</h2>
+<table>
+    <thead><tr><th>Attribute</th><th>Target</th></tr></thead>
+    <tbody>
+        <tr><td>Availability</td><td>99.5% during operating hours</td></tr>
+        <tr><td>Page response</td><td>&lt; 500 ms for list/detail views under normal load</td></tr>
+        <tr><td>Concurrent users</td><td>100+ supported on recommended server spec</td></tr>
+        <tr><td>Backups</td><td>Daily automated database backups, 30-day retention</td></tr>
+        <tr><td>Auditability</td><td>100% of write operations logged</td></tr>
+        <tr><td>Browser support</td><td>Latest Chrome, Edge, Firefox, Safari</td></tr>
+    </tbody>
+</table>
+
+<h2><span class="num">12</span>Assumptions &amp; Constraints</h2>
+<ul>
+    <li>Hospital LAN and stable server infrastructure are provided by the client.</li>
+    <li>A valid Laravel Nova license is available for production.</li>
+    <li>Currency is United States Dollar (USD) across the system.</li>
+    <li>End-user devices and peripherals (printers, scanners) are procured by the client.</li>
+</ul>
+
+<div class="doc-footer">
+    Collin Saunders Hospital — Hospital Management System · Solution Design Document v1.0 · Confidential
+</div>
+
+</div>
+</body>
+</html>
