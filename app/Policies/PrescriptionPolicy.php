@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\PrescriptionStatus;
 use App\Models\User;
 use App\Models\Prescription;
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -27,7 +28,12 @@ class PrescriptionPolicy
 
     public function update(User $user, Prescription $model): bool
     {
-        return $user->can('prescription-update');
+        if (! $user->can('prescription-update')) {
+            return false;
+        }
+
+        // A fully dispensed prescription is locked — no further edits.
+        return $model->status !== PrescriptionStatus::Dispensed;
     }
 
     /**

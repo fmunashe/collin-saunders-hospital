@@ -72,7 +72,7 @@ class Admission extends Resource
             Select::make('Status')->options(collect(AdmissionStatus::cases())->mapWithKeys(fn ($s) => [$s->value => ucfirst($s->value)]))->default('admitted')->rules('required')->searchable()->displayUsingLabels(),
 
             TabsGroup::make('Patient Medical Information', [
-                Tab::make('Notes',[
+                Tab::make('Patient Care Notes',[
                     HasMany::make('Notes', 'notes', AdmissionNote::class),
                   ]),
                 Tab::make('Prescriptions',[
