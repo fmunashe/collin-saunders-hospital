@@ -5,6 +5,10 @@ namespace App\Nova;
 use App\Enums\BillingType;
 use App\Enums\Gender;
 use App\Enums\PatientType;
+use App\Nova\Filters\PatientBillingType;
+use App\Nova\Filters\PatientCareStatus;
+use App\Nova\Filters\PatientGender;
+use App\Nova\Filters\PatientTypeFilter;
 use App\Nova\Metrics\PatientsByBilling;
 use App\Nova\Metrics\PatientsByGender;
 use App\Nova\Metrics\PatientsByType;
@@ -17,6 +21,8 @@ use Laravel\Nova\Fields\Select;
 use Laravel\Nova\Fields\Text;
 use Laravel\Nova\Fields\Textarea;
 use Laravel\Nova\Http\Requests\NovaRequest;
+use Laravel\Nova\Tabs\Tab;
+use Laravel\Nova\Tabs\TabsGroup;
 
 class Patient extends Resource
 {
@@ -65,12 +71,32 @@ class Patient extends Resource
             Text::make('Emergency Contact Name')->nullable()->hideFromIndex(),
             Text::make('Emergency Contact Phone')->nullable()->hideFromIndex(),
             Text::make('Emergency Contact Relationship')->nullable()->hideFromIndex(),
-            HasOne::make('Medical Aid Detail', 'medicalAidDetail', MedicalAidDetail::class),
-            HasMany::make('Visits'),
-            HasMany::make('Admissions'),
-            HasMany::make('Prescriptions'),
-            HasMany::make('Invoices'),
-            HasMany::make('Referrals'),
+            TabsGroup::make('Patient Medical Information', [
+                Tab::make('Medical Aid Detail',[
+                    HasOne::make('Medical Aid Detail', 'medicalAidDetail', MedicalAidDetail::class),
+                ]),
+                Tab::make('Visits',[
+                    HasMany::make('Visits'),
+                ]),
+                Tab::make('Admissions',[
+                    HasMany::make('Admissions'),
+                ]),
+                Tab::make('Prescriptions',[
+                    HasMany::make('Prescriptions'),
+                ]),
+                Tab::make('Invoices',[
+                    HasMany::make('Invoices'),
+                ]),
+                Tab::make('Referrals',[
+                    HasMany::make('Referrals'),
+                ]),
+            ]),
+//            HasOne::make('Medical Aid Detail', 'medicalAidDetail', MedicalAidDetail::class),
+//            HasMany::make('Visits'),
+//            HasMany::make('Admissions'),
+//            HasMany::make('Prescriptions'),
+//            HasMany::make('Invoices'),
+//            HasMany::make('Referrals'),
         ];
     }
 
@@ -80,6 +106,16 @@ class Patient extends Resource
             new PatientsByType,
             new PatientsByBilling,
             new PatientsByGender,
+        ];
+    }
+
+    public function filters(NovaRequest $request): array
+    {
+        return [
+            new PatientCareStatus,
+            new PatientGender,
+            new PatientTypeFilter,
+            new PatientBillingType,
         ];
     }
 

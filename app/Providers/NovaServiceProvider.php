@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Nova\ActionEvent;
 use App\Nova\Admission;
+use App\Nova\AdmissionNote;
 use App\Nova\Bed;
 use App\Nova\Dashboards\FinancialReports;
 use App\Nova\Dashboards\InpatientReports;
@@ -113,6 +114,7 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
                         MenuItem::resource(Patient::class)->icon('identification'),
                         MenuItem::resource(Visit::class)->icon('calendar-days'),
                         MenuItem::resource(Admission::class)->icon('building-office'),
+                        MenuItem::resource(AdmissionNote::class)->icon('pencil-square'),
                         MenuItem::resource(Referral::class)->icon('arrow-top-right-on-square'),
                         MenuItem::resource(Invoice::class)->icon('banknotes'),
                         MenuItem::resource(MedicationAdministration::class)->icon('light-bulb'),

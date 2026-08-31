@@ -3,6 +3,7 @@
 namespace App\Nova;
 
 use App\Enums\PrescriptionStatus;
+use App\Nova\Filters\PrescriptionStatus as PrescriptionStatusFilter;
 use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Fields\DateTime;
 use Laravel\Nova\Fields\HasMany;
@@ -35,6 +36,13 @@ class Prescription extends Resource
             Select::make('Status')->options(collect(PrescriptionStatus::cases())->mapWithKeys(fn ($s) => [$s->value => str_replace('_', ' ', ucfirst($s->value))]))->default('pending')->rules('required')->searchable()->displayUsingLabels(),
             Textarea::make('Notes')->nullable()->hideFromIndex(),
             HasMany::make('Items', 'items', PrescriptionItem::class),
+        ];
+    }
+
+    public function filters(NovaRequest $request): array
+    {
+        return [
+            new PrescriptionStatusFilter,
         ];
     }
 

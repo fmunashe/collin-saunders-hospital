@@ -127,4 +127,36 @@ class PharmacyTest extends TestCase
         $this->assertEquals('dispensed', $item->prescription->fresh()->status->value);
         $this->assertNotNull($item->prescription->fresh()->dispensed_at);
     }
+
+    public function test_cannot_add_or_modify_items_once_prescription_dispensed(): void
+    {
+        // A user holding all prescription-item permissions, so the policy
+        // decisions come down to the prescription status alone.
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        $user = \App\Models\User::factory()->create();
+        $user->assignRole('admin');
+        $user = $user->fresh();
+
+        $policy = new \App\Policies\PrescriptionItemPolicy;
+
+        // Start with a pending prescription — item management is allowed.
+        $item = $this->makePrescriptionItem(stock: 100, quantity: 10);
+
+        $this->assertTrue($policy->update($user, $item));
+        $this->assertTrue($policy->delete($user, $item));
+        request()->merge(['viaResourceId' => $item->prescription_id]);
+        $this->assertTrue($policy->create($user));
+
+        // Dispensing the only item flips the prescription to "dispensed".
+        $item->update(['dispensed' => true]);
+        $item = $item->fresh();
+
+        // Now further item changes are blocked by the policy.
+        $this->assertFalse($policy->update($user, $item));
+        $this->assertFalse($policy->delete($user, $item));
+
+        // And creating a new item under that prescription is blocked too.
+        request()->merge(['viaResourceId' => $item->prescription_id]);
+        $this->assertFalse($policy->create($user));
+    }
 }

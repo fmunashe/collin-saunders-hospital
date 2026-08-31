@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Admission;
+use App\Models\AdmissionNote;
 use App\Models\Bed;
 use App\Models\Department;
 use App\Models\Doctor;
@@ -262,6 +263,45 @@ class TestDataSeeder extends Seeder
                 'discharge_notes' => 'Patient recovered well. Discharged with oral medications.',
                 'status' => 'discharged',
             ]));
+        }
+
+        // --- Admission Notes (daily clinical log) ---
+        $author = User::first();
+        $noteBank = [
+            'doctor' => [
+                'Ward round: patient afebrile, vitals stable. Continue current management.',
+                'Reviewed labs — improving. Reduce IV fluids, encourage oral intake.',
+                'Assessed post-op site, healing well. Plan discharge in 2 days if stable.',
+            ],
+            'nurse' => [
+                'Morning obs: BP 120/78, HR 76, Temp 36.8. Patient comfortable.',
+                'Administered scheduled medication. Patient tolerated well, no adverse reaction.',
+                'Assisted with mobilisation. Pain score 3/10. Repositioned to prevent pressure sores.',
+            ],
+            'observation' => [
+                'Patient reported mild nausea after breakfast, monitoring.',
+                'Urine output adequate over last 8 hours. No concerns.',
+            ],
+            'procedure' => [
+                'Dressing changed under aseptic technique. Wound clean and dry.',
+                'IV cannula re-sited to left forearm, flushed and patent.',
+            ],
+        ];
+
+        foreach ($admissions as $admission) {
+            $days = max(1, $admission->admitted_at->diffInDays($admission->discharged_at ?? Carbon::now()));
+            $entries = min($days, rand(2, 5));
+
+            for ($d = 0; $d < $entries; $d++) {
+                $type = collect(['doctor', 'nurse', 'nurse', 'observation', 'procedure'])->random();
+                AdmissionNote::create([
+                    'admission_id' => $admission->id,
+                    'author_id' => $author?->id,
+                    'type' => $type,
+                    'noted_at' => $admission->admitted_at->copy()->addDays($d)->addHours(rand(6, 18)),
+                    'note' => collect($noteBank[$type])->random(),
+                ]);
+            }
         }
 
         // --- Prescriptions ---

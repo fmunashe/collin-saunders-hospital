@@ -136,6 +136,11 @@ class Admission extends Model
         return $this->hasMany(MedicationAdministration::class);
     }
 
+    public function notes(): HasMany
+    {
+        return $this->hasMany(AdmissionNote::class)->latest('noted_at');
+    }
+
     public function invoice(): HasOne
     {
         return $this->hasOne(Invoice::class);

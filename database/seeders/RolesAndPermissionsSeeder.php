@@ -36,6 +36,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'action-event',
             'stock-movement',
             'medication-administration',
+            'admission-note',
             'referral',
         ];
 
@@ -87,6 +88,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'patient-access', 'patient-show', 'patient-create', 'patient-update',
             'visit-access', 'visit-show', 'visit-create', 'visit-update',
             'admission-access', 'admission-show', 'admission-create', 'admission-update',
+            'admission-note-access', 'admission-note-show', 'admission-note-create', 'admission-note-update',
             'prescription-access', 'prescription-show', 'prescription-create', 'prescription-update',
             'prescription-item-access', 'prescription-item-show', 'prescription-item-create', 'prescription-item-update',
             'medication-access', 'medication-show',
@@ -103,6 +105,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'patient-access', 'patient-show', 'patient-update',
             'visit-access', 'visit-show', 'visit-update',
             'admission-access', 'admission-show', 'admission-update',
+            'admission-note-access', 'admission-note-show', 'admission-note-create', 'admission-note-update',
             'prescription-access', 'prescription-show',
             'ward-access', 'ward-show',
             'bed-access', 'bed-show', 'bed-update',

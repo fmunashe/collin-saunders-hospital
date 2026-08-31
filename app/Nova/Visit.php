@@ -4,6 +4,9 @@ namespace App\Nova;
 
 use App\Enums\VisitStatus;
 use App\Nova\Actions\GenerateVisitInvoice;
+use App\Nova\Filters\VisitDepartment;
+use App\Nova\Filters\VisitDoctor;
+use App\Nova\Filters\VisitStatus as VisitStatusFilter;
 use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Fields\DateTime;
 use Laravel\Nova\Fields\HasMany;
@@ -52,6 +55,15 @@ class Visit extends Resource
             Select::make('Status')->options(collect(VisitStatus::cases())->mapWithKeys(fn ($s) => [$s->value => str_replace('_', ' ', ucfirst($s->value))]))->default('waiting')->rules('required')->searchable()->displayUsingLabels(),
             HasMany::make('Prescriptions'),
             HasOne::make('Invoice'),
+        ];
+    }
+
+    public function filters(NovaRequest $request): array
+    {
+        return [
+            new VisitDepartment,
+            new VisitDoctor,
+            new VisitStatusFilter,
         ];
     }
 

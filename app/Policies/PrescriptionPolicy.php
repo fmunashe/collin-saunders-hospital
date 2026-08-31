@@ -30,18 +30,22 @@ class PrescriptionPolicy
         return $user->can('prescription-update');
     }
 
+    /**
+     * Prescriptions are a clinical record and must never be deleted.
+     * Cancel a prescription via its status instead of removing it.
+     */
     public function delete(User $user, Prescription $model): bool
     {
-        return $user->can('prescription-delete');
+        return false;
     }
 
     public function restore(User $user, Prescription $model): bool
     {
-        return $user->can('prescription-restore');
+        return false;
     }
 
     public function forceDelete(User $user, Prescription $model): bool
     {
-        return $user->can('prescription-delete');
+        return false;
     }
 }

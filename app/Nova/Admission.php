@@ -4,6 +4,10 @@ namespace App\Nova;
 
 use App\Enums\AdmissionStatus;
 use App\Nova\Actions\AdministerMedication;
+use App\Nova\Filters\AdmissionDepartment;
+use App\Nova\Filters\AdmissionDoctor;
+use App\Nova\Filters\AdmissionStatusFilter;
+use App\Nova\Filters\AdmissionWard;
 use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Fields\DateTime;
 use Laravel\Nova\Fields\HasMany;
@@ -12,6 +16,8 @@ use Laravel\Nova\Fields\ID;
 use Laravel\Nova\Fields\Select;
 use Laravel\Nova\Fields\Textarea;
 use Laravel\Nova\Http\Requests\NovaRequest;
+use Laravel\Nova\Tabs\Tab;
+use Laravel\Nova\Tabs\TabsGroup;
 
 class Admission extends Resource
 {
@@ -64,9 +70,37 @@ class Admission extends Resource
             Textarea::make('Diagnosis')->nullable()->hideFromIndex(),
             Textarea::make('Discharge Notes')->nullable()->hideFromIndex(),
             Select::make('Status')->options(collect(AdmissionStatus::cases())->mapWithKeys(fn ($s) => [$s->value => ucfirst($s->value)]))->default('admitted')->rules('required')->searchable()->displayUsingLabels(),
-            HasMany::make('Prescriptions'),
-            HasMany::make('Medication Administrations', 'medicationAdministrations', MedicationAdministration::class),
-            HasOne::make('Invoice'),
+
+            TabsGroup::make('Patient Medical Information', [
+                Tab::make('Notes',[
+                    HasMany::make('Notes', 'notes', AdmissionNote::class),
+                  ]),
+                Tab::make('Prescriptions',[
+                    HasMany::make('Prescriptions'),
+                  ]),
+                Tab::make('Medication Administrations',[
+                    HasMany::make('Medication Administrations', 'medicationAdministrations', MedicationAdministration::class),
+                  ]),
+                Tab::make('Invoice',[
+                    HasOne::make('Invoice'),
+                ]),
+
+            ]),
+
+//            HasMany::make('Notes', 'notes', AdmissionNote::class),
+//            HasMany::make('Prescriptions'),
+//            HasMany::make('Medication Administrations', 'medicationAdministrations', MedicationAdministration::class),
+//            HasOne::make('Invoice'),
+        ];
+    }
+
+    public function filters(NovaRequest $request): array
+    {
+        return [
+            new AdmissionDepartment,
+            new AdmissionStatusFilter,
+            new AdmissionWard,
+            new AdmissionDoctor,
         ];
     }
 
