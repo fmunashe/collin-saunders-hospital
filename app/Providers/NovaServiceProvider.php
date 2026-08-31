@@ -130,7 +130,7 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
                 ])->icon('beaker')->collapsable(),
 
                 MenuSection::make('Reports', [
-                    MenuGroup::make('View', [
+                    MenuGroup::make('View Reports', [
                         MenuItem::dashboard(PatientReports::class)->name('Patient')
                             ->canSee(fn ($r) => $r->user()?->can('view-patient-reports'))->icon('identification'),
                         MenuItem::dashboard(OutpatientReports::class)->name('Outpatient')
@@ -146,7 +146,7 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
                         MenuItem::dashboard(StaffReports::class)->name('Staff')
                             ->canSee(fn ($r) => $r->user()?->can('view-staff-reports'))->icon('user-group'),
                     ])->collapsedByDefault(),
-                    MenuGroup::make('Download PDF', [
+                    MenuGroup::make('Download PDFs', [
                         MenuItem::externalLink('Patient', url('/nova/reports/patient-reports/pdf'))->openInNewTab()
                             ->canSee(fn ($r) => $r->user()?->can('view-patient-reports'))->icon('document-arrow-down'),
                         MenuItem::externalLink('Outpatient', url('/nova/reports/outpatient-reports/pdf'))->openInNewTab()
