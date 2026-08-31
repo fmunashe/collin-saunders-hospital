@@ -165,6 +165,23 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
                             ->canSee(fn ($r) => $r->user()?->can('view-staff-reports'))->icon('document-arrow-down'),
                     ])->collapsable()->collapsedByDefault(),
                 ])->icon('chart-bar')->collapsable(),
+
+                MenuSection::make('Documentation', [
+                    MenuGroup::make('Docs', [
+                        MenuItem::externalLink('Documentation Portal', url('/docs'))
+                            ->openInNewTab()->icon('book-open'),
+                        MenuItem::externalLink('Solution Design', url('/docs/01_Solution_Design.html'))
+                            ->openInNewTab()->icon('document-text'),
+                        MenuItem::externalLink('Architecture', url('/docs/02_Architecture.html'))
+                            ->openInNewTab()->icon('document-text'),
+                        MenuItem::externalLink('QA & Test Strategy', url('/docs/03_QA_Test_Strategy.html'))
+                            ->openInNewTab()->icon('document-text'),
+                        MenuItem::externalLink('Deployment Guide', url('/docs/04_Deployment_Guide.html'))
+                            ->openInNewTab()->icon('document-text'),
+                        MenuItem::externalLink('Server Specifications', url('/docs/05_Server_Specifications.html'))
+                            ->openInNewTab()->icon('document-text'),
+                    ]),
+                ])->icon('book-open')->collapsable()->collapsedByDefault(),
             ];
         });
     }

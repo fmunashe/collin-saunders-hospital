@@ -32,9 +32,10 @@
     <nav class="bg-primary-500 shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center space-x-3">
-                    <img src="/images/logo.png" alt="Logo" class="h-10">
-                    <span class="text-white text-lg font-semibold hidden sm:block">Hospital Management System</span>
+                <div class="flex items-center">
+                    <span class="inline-flex items-center bg-white rounded-md px-3 py-1.5 shadow-sm">
+                        <img src="/images/logo.svg" alt="{{ config('app.name', 'HMS') }} Logo" class="h-9">
+                    </span>
                 </div>
                 <a href="/nova" class="inline-flex items-center px-4 py-2 bg-accent-500 text-primary-700 font-semibold text-sm rounded-md hover:bg-accent-400 transition-colors">
                     Staff Portal
@@ -210,7 +211,9 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div>
-                    <img src="/images/logo.png" alt="Logo" class="h-10 brightness-200">
+                    <span class="inline-flex items-center bg-white rounded-md px-3 py-2 shadow-sm">
+                        <img src="/images/logo.svg" alt="{{ config('app.name', 'HMS') }} Logo" class="h-10">
+                    </span>
                     <p class="mt-4 text-sm">Providing quality healthcare services with modern technology and compassionate care.</p>
                 </div>
                 <div>

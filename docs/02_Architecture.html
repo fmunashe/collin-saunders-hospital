@@ -37,6 +37,7 @@
         <li>Caching &amp; Sessions</li>
         <li>Data Architecture</li>
         <li>Security Architecture</li>
+        <li>Integration Layer <span class="badge gold">Phase 2</span></li>
         <li>Deployment Topology</li>
         <li>Scalability &amp; Resilience</li>
     </ol>
@@ -66,8 +67,10 @@
         <tr><td>Web server</td><td>Nginx + PHP-FPM</td><td>—</td></tr>
         <tr><td>Process manager</td><td>Supervisor</td><td>—</td></tr>
         <tr><td>Front-end build</td><td>Vite + Tailwind (Nova assets)</td><td>—</td></tr>
+        <tr><td>Integration (Phase 2)</td><td>SMS gateway, WhatsApp Business API, ICD-10 terminology, SAP (ERP/Finance), HL7 FHIR</td><td>Phase 2</td></tr>
     </tbody>
 </table>
+<p class="callout gold"><strong>Note:</strong> Integration technologies are provisioned in <strong>Phase 2</strong>. They connect through the dedicated Integration Layer (see section 11) and are not part of the Phase 1 core deployment.</p>
 
 <h2><span class="num">3</span>Logical Architecture</h2>
 <div class="diagram">
@@ -97,7 +100,12 @@
                   ┌────────▼─────────┐
                   │ Supervisor →     │
                   │ Horizon workers  │
-                  └──────────────────┘
+                  └────────┬─────────┘
+                           │ (Phase 2)
+                  ┌────────▼───────────────────────────────┐
+                  │        INTEGRATION LAYER                │
+                  │  SMS · WhatsApp · ICD-10 · SAP · FHIR   │
+                  └─────────────────────────────────────────┘
 </div>
 
 <h2><span class="num">4</span>Application Layers</h2>
@@ -108,6 +116,7 @@
     <div class="card"><h4>Services</h4><p>Report data aggregation, PDF/Excel generation, invoice building.</p></div>
     <div class="card"><h4>Persistence</h4><p>Eloquent ORM over MySQL/PostgreSQL with UUID keys and migrations.</p></div>
     <div class="card"><h4>Infrastructure</h4><p>Redis (cache/queue/session), Horizon workers, filesystem for generated documents.</p></div>
+    <div class="card"><h4>Integration <span class="badge gold">Phase 2</span></h4><p>Provider-agnostic adapters for SMS/WhatsApp, ICD-10 coding, and SAP — queued, auditable, and swappable. See section 11.</p></div>
 </div>
 
 <h2><span class="num">5</span>Domain Model &amp; Automation</h2>
@@ -173,7 +182,54 @@ Browser → Nginx (TLS) → PHP-FPM → Laravel Kernel
     <div class="card"><h4>App hardening</h4><p>CSRF protection, input validation, parameterised queries via Eloquent.</p></div>
 </div>
 
-<h2><span class="num">11</span>Deployment Topology</h2>
+<h2><span class="num">11</span>Integration Layer <span class="badge gold">Phase 2</span></h2>
+<div class="callout gold">
+    <strong>Scope note:</strong> The integration layer is planned for <strong>Phase 2</strong>. The core system (Phase 1) ships without external integrations; the architecture below reserves a clean extension point so integrations can be added later without reworking the core.
+</div>
+
+<p>A dedicated integration layer will sit alongside the domain, exposing a small set of provider-agnostic interfaces (contracts) with swappable adapters per external system. All outbound calls are dispatched through Redis-backed queues and Horizon workers so external latency or downtime never blocks clinical workflows. Inbound calls arrive through signed, versioned webhook/API endpoints.</p>
+
+<h3>Planned integrations</h3>
+<table>
+    <thead><tr><th>Category</th><th>System</th><th>Purpose</th><th>Direction</th></tr></thead>
+    <tbody>
+        <tr><td>Messaging</td><td>SMS gateway (e.g. Twilio / Clickatell / local aggregator)</td><td>Appointment reminders, OTPs, billing &amp; discharge notifications</td><td>Outbound</td></tr>
+        <tr><td>Messaging</td><td>WhatsApp Business API</td><td>Patient notifications, reminders, delivery-receipt callbacks</td><td>Outbound + inbound webhooks</td></tr>
+        <tr><td>Clinical coding</td><td>ICD-10 terminology</td><td>Standardised diagnosis coding on visits, admissions &amp; referrals</td><td>Reference lookup</td></tr>
+        <tr><td>Enterprise / Finance</td><td>SAP (ERP / Finance)</td><td>Post invoices, revenue &amp; GL entries; sync master data</td><td>Bidirectional</td></tr>
+        <tr><td>Health platforms</td><td>Medical-aid / HL7 FHIR endpoints (future)</td><td>Claims, eligibility &amp; clinical data exchange</td><td>Bidirectional</td></tr>
+    </tbody>
+</table>
+
+<h3>Design principles</h3>
+<ul>
+    <li><strong>Adapter pattern:</strong> each provider implements a shared contract (e.g. <code>SmsGateway</code>, <code>MessagingChannel</code>, <code>ErpConnector</code>, <code>CodingProvider</code>), so vendors can be swapped via config with no domain changes.</li>
+    <li><strong>Asynchronous &amp; resilient:</strong> outbound messages/postings are queued jobs with retry &amp; exponential backoff; failures are retained for inspection and never block the request.</li>
+    <li><strong>Anti-corruption layer:</strong> external payloads are translated to/from internal domain models so third-party schemas don't leak into the core.</li>
+    <li><strong>Secured endpoints:</strong> inbound webhooks are signature-verified; outbound credentials held in encrypted config/secrets, least-privilege scopes.</li>
+    <li><strong>Auditable:</strong> every integration message (SMS/WhatsApp send, SAP posting, ICD-10 lookup batch) is logged to an append-only integration log for traceability.</li>
+    <li><strong>Reference data caching:</strong> ICD-10 code sets are cached in Redis / a local table for fast, offline-tolerant lookups.</li>
+</ul>
+
+<div class="diagram">
+┌──────────────────────────────────────────────────────────────┐
+│                     LARAVEL DOMAIN (core)                      │
+│        Patients · Visits · Admissions · Invoices · Rx          │
+└───────────────────────────────┬──────────────────────────────┘
+                                 │ domain events / contracts
+┌───────────────────────────────▼──────────────────────────────┐
+│                 INTEGRATION LAYER  (Phase 2)                   │
+│  Contracts:  MessagingChannel · CodingProvider · ErpConnector  │
+│  Queued jobs · retries · signature verify · anti-corruption    │
+└───┬───────────────┬─────────────────┬────────────────┬────────┘
+    │               │                 │                │
+┌───▼────┐   ┌──────▼──────┐   ┌───────▼──────┐  ┌──────▼───────┐
+│  SMS   │   │  WhatsApp   │   │   ICD-10     │  │     SAP      │
+│gateway │   │ Business API│   │ terminology  │  │  ERP/Finance │
+└────────┘   └─────────────┘   └──────────────┘  └──────────────┘
+</div>
+
+<h2><span class="num">12</span>Deployment Topology</h2>
 <p>The recommended production topology is a single well-specified application server co-located with the database, or a two-node split for higher availability. See the <em>Deployment Guide</em> for full setup.</p>
 <div class="diagram">
 Single-node (recommended for launch)
@@ -191,7 +247,7 @@ Two-node (growth path)
 └───────────────────┘      └────────────────────┘
 </div>
 
-<h2><span class="num">12</span>Scalability &amp; Resilience</h2>
+<h2><span class="num">13</span>Scalability &amp; Resilience</h2>
 <ul>
     <li><strong>Horizontal scaling:</strong> stateless app tier (sessions in Redis) allows adding PHP-FPM nodes behind a load balancer.</li>
     <li><strong>Vertical headroom:</strong> the recommended server spec supports 100+ concurrent users with margin.</li>
