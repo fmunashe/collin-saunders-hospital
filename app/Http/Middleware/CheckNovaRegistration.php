@@ -17,6 +17,11 @@ class CheckNovaRegistration
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Skip the license gate in automated-testing environments
+        if (app()->environment(['testing', 'e2e'])) {
+            return $next($request);
+        }
+
         $isRegistered = Cache::get('nova_license_valid');
 
         if ($isRegistered === null) {
