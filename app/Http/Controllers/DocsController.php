@@ -88,6 +88,11 @@ class DocsController extends Controller
             ]);
         }
 
+        // Office documents (Word / PowerPoint) are downloaded as attachments.
+        if (Str::endsWith($file, ['.docx', '.pptx', '.xlsx', '.pdf'])) {
+            return response()->download($path, $file);
+        }
+
         return response(File::get($path), 200, [
             'Content-Type' => File::mimeType($path) ?: 'application/octet-stream',
         ]);

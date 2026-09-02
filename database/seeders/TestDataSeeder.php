@@ -49,12 +49,12 @@ class TestDataSeeder extends Seeder
         // --- Wards ---
         $wards = collect();
         $wardData = [
-            ['name' => 'Male General', 'type' => 'general', 'capacity' => 20],
-            ['name' => 'Female General', 'type' => 'general', 'capacity' => 20],
-            ['name' => 'ICU', 'type' => 'icu', 'capacity' => 8],
-            ['name' => 'Maternity', 'type' => 'maternity', 'capacity' => 15],
-            ['name' => 'Paediatric', 'type' => 'paediatric', 'capacity' => 12],
-            ['name' => 'Surgical', 'type' => 'general', 'capacity' => 16],
+            ['name' => 'Male General', 'type' => 'general', 'gender_restriction' => 'male', 'capacity' => 20],
+            ['name' => 'Female General', 'type' => 'general', 'gender_restriction' => 'female', 'capacity' => 20],
+            ['name' => 'ICU', 'type' => 'icu', 'gender_restriction' => null, 'capacity' => 8],
+            ['name' => 'Maternity', 'type' => 'maternity', 'gender_restriction' => null, 'capacity' => 15],
+            ['name' => 'Paediatric', 'type' => 'paediatric', 'gender_restriction' => null, 'capacity' => 12],
+            ['name' => 'Surgical', 'type' => 'general', 'gender_restriction' => null, 'capacity' => 16],
         ];
 
         foreach ($wardData as $i => $ward) {
@@ -222,11 +222,29 @@ class TestDataSeeder extends Seeder
 
         // Admit 5 distinct patients to distinct available beds.
         // The Admission model automatically marks each bed as occupied.
+        // Assign each patient to a gender-compatible ward/bed to respect the
+        // ward gender restrictions enforced by the Admission model.
         $availableBeds = $beds->filter(fn ($b) => $b->status->value === 'available')->values();
         $admissionPatients = $patients->shuffle()->take(5)->values();
+        $usedBedIds = [];
+        $i = 0;
 
-        foreach ($admissionPatients as $i => $patient) {
-            $bed = $availableBeds[$i];
+        foreach ($admissionPatients as $patient) {
+            // Find the first available bed whose ward accepts this patient's gender.
+            $bed = $availableBeds->first(function ($b) use ($wards, $patient, $usedBedIds) {
+                if (in_array($b->id, $usedBedIds, true)) {
+                    return false;
+                }
+                $ward = $wards->firstWhere('id', $b->ward_id);
+
+                return $ward && $ward->acceptsGender($patient->gender);
+            });
+
+            if (! $bed) {
+                continue; // no compatible bed free — skip this patient
+            }
+
+            $usedBedIds[] = $bed->id;
             $doctor = $doctors->random();
             $ward = $wards->firstWhere('id', $bed->ward_id);
             $admittedAt = Carbon::now()->subDays(rand(1, 10));
@@ -241,13 +259,16 @@ class TestDataSeeder extends Seeder
                 'reason_for_admission' => $reasons[$i % count($reasons)],
                 'status' => 'admitted',
             ]));
+            $i++;
         }
 
         // Add some discharged admissions
         for ($i = 0; $i < 3; $i++) {
             $patient = $patients->random();
             $doctor = $doctors->random();
-            $ward = $wards->random();
+            // Pick a ward compatible with the patient's gender for realistic data.
+            $ward = $wards->filter(fn ($w) => $w->acceptsGender($patient->gender))->random()
+                ?? $wards->firstWhere('gender_restriction', null);
             $admittedAt = Carbon::now()->subDays(rand(15, 45));
 
             $admissions->push(Admission::create([

@@ -29,6 +29,23 @@ class Admission extends Model
 
     protected static function booted(): void
     {
+        // Enforce ward gender compatibility before saving an active admission.
+        static::saving(function (Admission $admission) {
+            if ($admission->ward_id && $admission->isActive()) {
+                $ward = $admission->ward()->first();
+                $patient = $admission->patient()->first();
+
+                if ($ward && $patient && ! $ward->acceptsGender($patient->gender)) {
+                    $restriction = $ward->effectiveGenderRestriction();
+                    $label = $restriction ? ucfirst($restriction->value) : 'restricted';
+
+                    throw ValidationException::withMessages([
+                        'ward_id' => "This ward is {$label}-only and cannot admit this patient based on their gender.",
+                    ]);
+                }
+            }
+        });
+
         // Prevent double-booking a bed before saving
         static::saving(function (Admission $admission) {
             if ($admission->bed_id && $admission->isActive()) {

@@ -51,7 +51,7 @@ class Admission extends Resource
             BelongsTo::make('Patient')->searchable()->rules('required'),
             BelongsTo::make('Doctor')->searchable()->rules('required'),
             BelongsTo::make('Department')->searchable()->rules('required'),
-            BelongsTo::make('Ward')->searchable()->rules('required'),
+            BelongsTo::make('Ward')->searchable()->rules('required', new \App\Rules\WardAcceptsPatientGender),
             BelongsTo::make('Bed')->nullable()->searchable()->relatableQueryUsing(function (NovaRequest $request, $query) {
                 // Show only available beds, plus the bed already assigned to this admission
                 $query->where(function ($q) use ($request) {

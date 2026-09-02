@@ -44,6 +44,17 @@ class DocsTest extends TestCase
         $this->actingAs($user)->get('/docs/01_Solution_Design.html')->assertOk();
     }
 
+    public function test_office_documents_download_as_attachments(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get('/docs/HMS_System_Documentation.docx');
+        $response->assertOk();
+        $response->assertHeader('content-disposition');
+
+        $this->actingAs($user)->get('/docs/HMS_Training_Slides.pptx')->assertOk();
+    }
+
     public function test_doc_pages_include_the_brand_favicon(): void
     {
         $user = User::factory()->create();
