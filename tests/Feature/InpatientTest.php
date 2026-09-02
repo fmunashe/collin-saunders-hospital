@@ -94,6 +94,8 @@ class InpatientTest extends TestCase
 
         $this->assertEquals('available', $c['bed']->fresh()->status->value);
         $this->assertNotNull($admission->fresh()->discharged_at);
+        // The bed is also released from the admission (no longer allocated).
+        $this->assertNull($admission->fresh()->bed_id);
     }
 
     public function test_cannot_double_book_an_occupied_bed(): void

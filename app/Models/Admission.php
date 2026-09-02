@@ -80,6 +80,11 @@ class Admission extends Model
 
     /**
      * Keep the linked bed's status in sync with the admission status.
+     *
+     * While admitted, the bed is marked occupied. Once the patient leaves the
+     * admitted state (discharged / transferred / deceased) the bed is both
+     * freed (status → available) AND released from the admission (bed_id
+     * cleared) so it is no longer allocated to that admission.
      */
     public function syncBedStatus(): void
     {
@@ -89,16 +94,21 @@ class Admission extends Model
 
         $bed = $this->bed()->first();
 
-        if (! $bed) {
+        if ($this->status === AdmissionStatus::Admitted) {
+            $bed?->update(['status' => BedStatus::Occupied->value]);
+
             return;
         }
 
-        if ($this->status === AdmissionStatus::Admitted) {
-            $bed->update(['status' => BedStatus::Occupied->value]);
-        } else {
-            // Discharged, transferred, or deceased — free the bed
-            $bed->update(['status' => BedStatus::Available->value]);
-        }
+        // Discharged, transferred, or deceased — free and release the bed.
+        $bed?->update(['status' => BedStatus::Available->value]);
+
+        // Detach the bed from this admission without re-triggering model events.
+        static::withoutEvents(function () {
+            static::where('id', $this->id)->update(['bed_id' => null]);
+        });
+
+        $this->bed_id = null;
     }
 
     public function patient(): BelongsTo

@@ -4,6 +4,7 @@ namespace App\Nova;
 
 use App\Enums\AdmissionStatus;
 use App\Nova\Actions\AdministerMedication;
+use App\Nova\Actions\DischargePatient;
 use App\Nova\Filters\AdmissionDepartment;
 use App\Nova\Filters\AdmissionDoctor;
 use App\Nova\Filters\AdmissionStatusFilter;
@@ -107,7 +108,13 @@ class Admission extends Resource
     public function actions(NovaRequest $request): array
     {
         return array_merge(parent::actions($request), [
-            new AdministerMedication,
+            (new DischargePatient)
+                ->confirmButtonText('Discharge')
+                ->canRun(fn ($request, $admission) => $admission->status === AdmissionStatus::Admitted
+                    && $request->user()?->can('admission-update')),
+            (new AdministerMedication)
+                ->canRun(fn ($request, $admission) => $admission->status === AdmissionStatus::Admitted
+                    && $request->user()?->can('medication-administration-create')),
         ]);
     }
 
