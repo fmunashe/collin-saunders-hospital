@@ -5,10 +5,12 @@ namespace App\Policies;
 use App\Enums\PrescriptionStatus;
 use App\Models\User;
 use App\Models\Prescription;
+use App\Policies\Concerns\ChecksAdmissionActive;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class PrescriptionPolicy
 {
+    use ChecksAdmissionActive;
     use HandlesAuthorization;
 
     public function viewAny(User $user): bool
@@ -23,7 +25,13 @@ class PrescriptionPolicy
 
     public function create(User $user): bool
     {
-        return $user->can('prescription-create');
+        if (! $user->can('prescription-create')) {
+            return false;
+        }
+
+        // Cannot prescribe against a discharged patient's admission.
+        // (Outpatient prescriptions have no admission and are unaffected.)
+        return ! $this->creatingForDischargedAdmission();
     }
 
     public function update(User $user, Prescription $model): bool
@@ -33,7 +41,12 @@ class PrescriptionPolicy
         }
 
         // A fully dispensed prescription is locked — no further edits.
-        return $model->status !== PrescriptionStatus::Dispensed;
+        if ($model->status === PrescriptionStatus::Dispensed) {
+            return false;
+        }
+
+        // No edits once the linked admission is discharged.
+        return $this->admissionIsActive($model->admission_id);
     }
 
     /**

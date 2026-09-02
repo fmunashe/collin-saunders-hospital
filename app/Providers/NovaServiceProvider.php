@@ -24,6 +24,7 @@ use App\Nova\Permission;
 use App\Nova\Prescription;
 use App\Nova\Referral;
 use App\Nova\Role;
+use App\Nova\Setting;
 use App\Nova\Staff;
 use App\Nova\StockMovement;
 use App\Nova\User;
@@ -106,6 +107,7 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
                     MenuGroup::make('Configs', [
                         MenuItem::resource(Ward::class)->icon('wrench-screwdriver'),
                         MenuItem::resource(Bed::class)->icon('wrench'),
+                        MenuItem::resource(Setting::class)->icon('adjustments-horizontal'),
                     ]),
                 ])->icon('cog')->collapsable(),
 

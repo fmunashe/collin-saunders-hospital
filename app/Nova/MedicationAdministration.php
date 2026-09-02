@@ -4,6 +4,7 @@ namespace App\Nova;
 
 use App\Enums\AdministrationRoute;
 use App\Enums\AdministrationStatus;
+use App\Rules\AdmissionIsActive;
 use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Fields\DateTime;
 use Laravel\Nova\Fields\ID;
@@ -40,7 +41,7 @@ class MedicationAdministration extends Resource
             ID::make()->sortable()->onlyOnDetail(),
             BelongsTo::make('Admission')->searchable()->relatableQueryUsing(function (NovaRequest $request, $query) {
                 $query->where('status', 'admitted');
-            })->rules('required'),
+            })->rules('required', new AdmissionIsActive),
             BelongsTo::make('Medication')->searchable()->rules('required'),
             Text::make('Dosage')->rules('required', 'max:100')->help('e.g. 500mg, 10ml, 2 tablets'),
             Select::make('Route')->options(collect(AdministrationRoute::cases())->mapWithKeys(fn ($r) => [$r->value => strtoupper($r->value)]))->rules('required')->searchable()->displayUsingLabels(),

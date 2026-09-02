@@ -4,10 +4,12 @@ namespace App\Policies;
 
 use App\Models\AdmissionNote;
 use App\Models\User;
+use App\Policies\Concerns\ChecksAdmissionActive;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class AdmissionNotePolicy
 {
+    use ChecksAdmissionActive;
     use HandlesAuthorization;
 
     public function viewAny(User $user): bool
@@ -22,12 +24,22 @@ class AdmissionNotePolicy
 
     public function create(User $user): bool
     {
-        return $user->can('admission-note-create');
+        if (! $user->can('admission-note-create')) {
+            return false;
+        }
+
+        // Cannot add notes to a discharged patient's admission.
+        return ! $this->creatingForDischargedAdmission();
     }
 
     public function update(User $user, AdmissionNote $model): bool
     {
         if (! $user->can('admission-note-update')) {
+            return false;
+        }
+
+        // No edits once the patient is discharged.
+        if (! $this->admissionIsActive($model->admission_id)) {
             return false;
         }
 

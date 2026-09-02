@@ -37,6 +37,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'stock-movement',
             'medication-administration',
             'admission-note',
+            'setting',
             'referral',
         ];
 

@@ -3,6 +3,7 @@
 namespace App\Nova;
 
 use App\Enums\AdmissionNoteType;
+use App\Rules\AdmissionIsActive;
 use Laravel\Nova\Fields\Badge;
 use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Fields\DateTime;
@@ -50,7 +51,7 @@ class AdmissionNote extends Resource
                 ->relatableQueryUsing(function (NovaRequest $request, $query) {
                     $query->where('status', 'admitted');
                 })
-                ->rules('required'),
+                ->rules('required', new AdmissionIsActive),
 
             Badge::make('Type')->map([
                 'doctor' => 'info',

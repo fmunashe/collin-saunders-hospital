@@ -4,6 +4,7 @@ namespace App\Nova;
 
 use App\Enums\PrescriptionStatus;
 use App\Nova\Filters\PrescriptionStatus as PrescriptionStatusFilter;
+use App\Rules\AdmissionIsActive;
 use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Fields\DateTime;
 use Laravel\Nova\Fields\HasMany;
@@ -29,7 +30,18 @@ class Prescription extends Resource
             BelongsTo::make('Patient')->searchable()->rules('required'),
             BelongsTo::make('Doctor')->searchable()->rules('required'),
             BelongsTo::make('Visit')->nullable(),
-            BelongsTo::make('Admission')->nullable(),
+            BelongsTo::make('Admission')->nullable()->relatableQueryUsing(function (NovaRequest $request, $query) {
+                // Only allow linking to a currently-admitted patient (plus the
+                // admission already attached to this prescription when editing).
+                $query->where('status', 'admitted');
+
+                if ($request->resourceId) {
+                    $prescription = \App\Models\Prescription::find($request->resourceId);
+                    if ($prescription && $prescription->admission_id) {
+                        $query->orWhere('id', $prescription->admission_id);
+                    }
+                }
+            })->rules(new AdmissionIsActive),
             DateTime::make('Prescribed At')->rules('required')->sortable()->default(now()),
             DateTime::make('Dispensed At')->readonly()->sortable()->hideWhenCreating()->hideWhenUpdating(),
             BelongsTo::make('Dispensed By', 'dispensedBy', User::class)->readonly()->hideWhenCreating()->hideWhenUpdating()->nullable(),

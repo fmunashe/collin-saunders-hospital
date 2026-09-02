@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             DepartmentSeeder::class,
             MedicalAidSchemeSeeder::class,
             RolesAndPermissionsSeeder::class,
+            SettingsSeeder::class,
             TestDataSeeder::class,
         ]);
 
